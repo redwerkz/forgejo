@@ -6,7 +6,6 @@ package activitypub
 
 import (
 	user_model "code.gitea.io/gitea/models/user"
-	"code.gitea.io/gitea/modules/setting"
 
 	ap "github.com/go-ap/activitypub"
 )
@@ -16,7 +15,7 @@ func Follow(actorUser, followUser *user_model.User) *ap.Follow {
 	object := ap.PersonNew(ap.IRI(followUser.LoginName))
 	follow := ap.FollowNew("", object)
 	follow.Type = ap.FollowType
-	follow.Actor = ap.PersonNew(ap.IRI(setting.AppURL + "api/v1/activitypub/user/" + actorUser.Name))
+	follow.Actor = ap.PersonNew(ap.IRI(actorUser.GetIRI()))
 	follow.To = ap.ItemCollection{ap.Item(ap.IRI(followUser.LoginName + "/inbox"))}
 	return follow
 }
@@ -25,7 +24,7 @@ func Follow(actorUser, followUser *user_model.User) *ap.Follow {
 func Unfollow(actorUser, followUser *user_model.User) *ap.Undo {
 	object := ap.PersonNew(ap.IRI(followUser.LoginName))
 	follow := ap.FollowNew("", object)
-	follow.Actor = ap.PersonNew(ap.IRI(setting.AppURL + "api/v1/activitypub/user/" + actorUser.Name))
+	follow.Actor = ap.PersonNew(ap.IRI(actorUser.GetIRI()))
 	unfollow := ap.UndoNew("", follow)
 	unfollow.Type = ap.UndoType
 	unfollow.To = ap.ItemCollection{ap.Item(ap.IRI(followUser.LoginName + "/inbox"))}

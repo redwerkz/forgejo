@@ -269,8 +269,7 @@ func PersonFollowing(ctx *context.APIContext) {
 	following.TotalItems = uint(len(users))
 
 	for _, user := range users {
-		// TODO: handle non-Federated users
-		person := ap.PersonNew(ap.IRI(user.Website))
+		person := ap.PersonNew(ap.IRI(user.GetIRI()))
 		err := following.OrderedItems.Append(person)
 		if err != nil {
 			ctx.ServerError("OrderedItems.Append", err)
@@ -310,8 +309,7 @@ func PersonFollowers(ctx *context.APIContext) {
 	followers.TotalItems = uint(len(users))
 
 	for _, user := range users {
-		// TODO: handle non-Federated users
-		person := ap.PersonNew(ap.IRI(user.Website))
+		person := ap.PersonNew(ap.IRI(user.GetIRI()))
 		err := followers.OrderedItems.Append(person)
 		if err != nil {
 			ctx.ServerError("OrderedItems.Append", err)
@@ -355,8 +353,7 @@ func PersonLiked(ctx *context.APIContext) {
 	liked.TotalItems = uint(count)
 
 	for _, repo := range repos {
-		// TODO: Handle remote starred repos
-		repo := forgefed.RepositoryNew(ap.IRI(setting.AppURL + "api/v1/activitypub/repo/" + repo.OwnerName + "/" + repo.Name))
+		repo := forgefed.RepositoryNew(ap.IRI(repo.GetIRI()))
 		err := liked.OrderedItems.Append(repo)
 		if err != nil {
 			ctx.ServerError("OrderedItems.Append", err)

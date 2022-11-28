@@ -12,7 +12,6 @@ import (
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/forgefed"
 	"code.gitea.io/gitea/modules/log"
-	"code.gitea.io/gitea/modules/setting"
 
 	ap "github.com/go-ap/activitypub"
 )
@@ -49,7 +48,7 @@ func Repo(ctx *context.APIContext) {
 		return
 	}
 
-	repo.AttributedTo = ap.IRI(setting.AppURL + "api/v1/activitypub/user/" + ctx.ContextUser.Name)
+	repo.AttributedTo = ap.IRI(ctx.Repo.Owner.GetIRI())
 
 	repo.Summary = ap.NaturalLanguageValuesNew()
 	err = repo.Summary.Set("en", ap.Content(ctx.Repo.Repository.Description))
