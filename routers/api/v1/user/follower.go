@@ -1,7 +1,6 @@
 // Copyright 2015 The Gogs Authors. All rights reserved.
 // Copyright 2020 The Gitea Authors.
-// Use of this source code is governed by a MIT-style
-// license that can be found in the LICENSE file.
+// SPDX-License-Identifier: MIT
 
 package user
 
@@ -220,7 +219,7 @@ func Follow(ctx *context.APIContext) {
 	//   "204":
 	//     "$ref": "#/responses/empty"
 
-	if err := user_service.FollowUser(ctx.Doer.ID, ctx.ContextUser.ID); err != nil {
+	if err := user_service.FollowUser(ctx, ctx.Doer.ID, ctx.ContextUser.ID); err != nil {
 		ctx.Error(http.StatusInternalServerError, "FollowUser", err)
 		return
 	}
@@ -242,7 +241,7 @@ func Unfollow(ctx *context.APIContext) {
 	//   "204":
 	//     "$ref": "#/responses/empty"
 
-	if err := user_service.UnfollowUser(ctx.Doer.ID, ctx.ContextUser.ID); err != nil {
+	if err := user_service.UnfollowUser(ctx, ctx.Doer.ID, ctx.ContextUser.ID); err != nil {
 		ctx.Error(http.StatusInternalServerError, "UnfollowUser", err)
 		return
 	}

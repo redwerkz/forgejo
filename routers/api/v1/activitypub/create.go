@@ -135,7 +135,7 @@ func createRepository(ctx context.Context, repository *forgefed.Repository) erro
 	}
 
 	// Check if repo exists
-	_, err = repo_model.GetRepositoryByOwnerAndNameCtx(ctx, user.Name, repository.Name.String())
+	_, err = repo_model.GetRepositoryByOwnerAndName(ctx, user.Name, repository.Name.String())
 	if err == nil {
 		return nil
 	}
@@ -244,7 +244,7 @@ func createPullRequest(ctx context.Context, ticket *forgefed.Ticket) error {
 	if err != nil {
 		return err
 	}
-	originRepo, err := repo_model.GetRepositoryByOwnerAndName(originUsername, originReponame)
+	originRepo, err := repo_model.GetRepositoryByOwnerAndName(ctx, originUsername, originReponame)
 	if err != nil {
 		return err
 	}
@@ -252,7 +252,7 @@ func createPullRequest(ctx context.Context, ticket *forgefed.Ticket) error {
 	if err != nil {
 		return err
 	}
-	targetRepo, err := repo_model.GetRepositoryByOwnerAndName(targetUsername, targetReponame)
+	targetRepo, err := repo_model.GetRepositoryByOwnerAndName(ctx, targetUsername, targetReponame)
 	if err != nil {
 		return err
 	}
@@ -300,7 +300,7 @@ func createComment(ctx context.Context, note *ap.Note) error {
 	if err != nil {
 		return err
 	}
-	repo, err := repo_model.GetRepositoryByOwnerAndNameCtx(ctx, username, reponame)
+	repo, err := repo_model.GetRepositoryByOwnerAndName(ctx, username, reponame)
 	if err != nil {
 		return err
 	}
@@ -308,7 +308,7 @@ func createComment(ctx context.Context, note *ap.Note) error {
 	if err != nil {
 		return err
 	}
-	_, err = issues_model.CreateCommentCtx(ctx, &issues_model.CreateCommentOptions{
+	_, err = issues_model.CreateComment(ctx, &issues_model.CreateCommentOptions{
 		Doer:     user,
 		Repo:     repo,
 		Issue:    issue,

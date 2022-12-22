@@ -76,7 +76,7 @@ func RepositoryIRIToRepository(ctx context.Context, repoIRI ap.IRI) (*repo_model
 	}
 
 	// TODO: create remote repo if not exists
-	return repo_model.GetRepositoryByOwnerAndName(username, reponame)
+	return repo_model.GetRepositoryByOwnerAndName(ctx, username, reponame)
 }
 
 // Returns the owner, repo name, and idx of a Ticket object IRI

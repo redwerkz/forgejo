@@ -1,6 +1,5 @@
 // Copyright 2021 The Gitea Authors. All rights reserved.
-// Use of this source code is governed by a MIT-style
-// license that can be found in the LICENSE file.
+// SPDX-License-Identifier: MIT
 
 package user
 
@@ -80,7 +79,7 @@ func DeleteUser(ctx context.Context, u *user_model.User, purge bool) error {
 				Actor:   u,
 			})
 			if err != nil {
-				return fmt.Errorf("SearchRepositoryByName: %w", err)
+				return fmt.Errorf("GetUserRepositories: %w", err)
 			}
 			if len(repos) == 0 {
 				break
@@ -134,7 +133,7 @@ func DeleteUser(ctx context.Context, u *user_model.User, purge bool) error {
 		}
 	}
 
-	ctx, committer, err := db.TxContext()
+	ctx, committer, err := db.TxContext(db.DefaultContext)
 	if err != nil {
 		return err
 	}
@@ -237,7 +236,7 @@ func UploadAvatar(u *user_model.User, data []byte) error {
 		return err
 	}
 
-	ctx, committer, err := db.TxContext()
+	ctx, committer, err := db.TxContext(db.DefaultContext)
 	if err != nil {
 		return err
 	}
@@ -284,18 +283,18 @@ func DeleteAvatar(u *user_model.User) error {
 }
 
 // FollowUser marks someone be another's follower.
-func FollowUser(userID, followID int64) (err error) {
+func FollowUser(ctx context.Context, userID, followID int64) (err error) {
 	if userID == followID || user_model.IsFollowing(userID, followID) {
 		return nil
 	}
 
-	followUser, err := user_model.GetUserByID(followID)
+	followUser, err := user_model.GetUserByID(ctx, followID)
 	if err != nil {
 		return
 	}
 	if followUser.LoginType == auth.Federated {
 		// Following remote user
-		actorUser, err := user_model.GetUserByID(userID)
+		actorUser, err := user_model.GetUserByID(ctx, userID)
 		if err != nil {
 			return err
 		}
@@ -309,18 +308,18 @@ func FollowUser(userID, followID int64) (err error) {
 }
 
 // UnfollowUser unmarks someone as another's follower.
-func UnfollowUser(userID, followID int64) (err error) {
+func UnfollowUser(ctx context.Context, userID, followID int64) (err error) {
 	if userID == followID || !user_model.IsFollowing(userID, followID) {
 		return nil
 	}
 
-	followUser, err := user_model.GetUserByID(followID)
+	followUser, err := user_model.GetUserByID(ctx, followID)
 	if err != nil {
 		return
 	}
 	if followUser.LoginType == auth.Federated {
 		// Unfollowing remote user
-		actorUser, err := user_model.GetUserByID(userID)
+		actorUser, err := user_model.GetUserByID(ctx, userID)
 		if err != nil {
 			return err
 		}

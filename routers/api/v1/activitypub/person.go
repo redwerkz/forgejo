@@ -1,6 +1,5 @@
 // Copyright 2022 The Gitea Authors. All rights reserved.
-// Use of this source code is governed by a MIT-style
-// license that can be found in the LICENSE file.
+// SPDX-License-Identifier: MIT
 
 package activitypub
 
@@ -218,7 +217,7 @@ func PersonOutbox(ctx *context.APIContext) {
 
 	// TODO: Remove this code and implement an ActionStarRepo type, so `GetFeeds`
 	// can handle this with correct pagination and ordering.
-	stars, err := repo_model.GetStarredRepos(ctx.ContextUser.ID, false, db.ListOptions{Page: 1, PageSize: 1000000})
+	stars, err := repo_model.GetStarredRepos(ctx, ctx.ContextUser.ID, false, db.ListOptions{Page: 1, PageSize: 1000000})
 	if err != nil {
 		ctx.ServerError("Couldn't fetch stars", err)
 		return
@@ -339,7 +338,7 @@ func PersonLiked(ctx *context.APIContext) {
 
 	iri := ctx.ContextUser.GetIRI()
 
-	repos, count, err := repo_model.SearchRepository(&repo_model.SearchRepoOptions{
+	repos, count, err := repo_model.SearchRepository(ctx, &repo_model.SearchRepoOptions{
 		Actor:       ctx.Doer,
 		Private:     ctx.IsSigned,
 		StarredByID: ctx.ContextUser.ID,

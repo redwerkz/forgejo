@@ -16,11 +16,11 @@ import (
 
 // Construct a Note object from a comment
 func Note(comment *issues_model.Comment) (*ap.Note, error) {
-	err := comment.LoadPoster()
+	err := comment.LoadPoster(db.DefaultContext)
 	if err != nil {
 		return nil, err
 	}
-	err = comment.LoadIssue()
+	err = comment.LoadIssue(db.DefaultContext)
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +60,7 @@ func Ticket(issue *issues_model.Issue) (*forgefed.Ticket, error) {
 	}
 	ticket.Context = ap.IRI(issue.Repo.GetIRI())
 
-	err = issue.LoadPoster()
+	err = issue.LoadPoster(db.DefaultContext)
 	if err != nil {
 		return nil, err
 	}
