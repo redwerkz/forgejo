@@ -10,7 +10,7 @@ import (
 	ap "github.com/go-ap/activitypub"
 )
 
-// Create and send Follow activity
+// Create Follow activity
 func Follow(actorUser, followUser *user_model.User) *ap.Follow {
 	object := ap.PersonNew(ap.IRI(followUser.LoginName))
 	follow := ap.FollowNew("", object)
@@ -20,7 +20,7 @@ func Follow(actorUser, followUser *user_model.User) *ap.Follow {
 	return follow
 }
 
-// Create and send Undo Follow activity
+// Create Undo Follow activity
 func Unfollow(actorUser, followUser *user_model.User) *ap.Undo {
 	object := ap.PersonNew(ap.IRI(followUser.LoginName))
 	follow := ap.FollowNew("", object)
