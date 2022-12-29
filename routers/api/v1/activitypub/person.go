@@ -16,7 +16,6 @@ import (
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/convert"
 	"code.gitea.io/gitea/modules/forgefed"
-	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/routers/api/v1/utils"
 	"code.gitea.io/gitea/services/activitypub"
@@ -117,21 +116,19 @@ func PersonInbox(ctx *context.APIContext) {
 
 	// Make sure keyID matches the user doing the activity
 	_, keyID, _ := getKeyID(ctx.Req)
-	if activity.Actor != nil && !strings.HasPrefix(keyID, activity.Actor.GetLink().String()) {
-		ctx.ServerError("Actor does not match HTTP signature keyID", nil)
+	err = checkActivityAndKeyID(activity, keyID)
+	if err != nil {
+		ctx.ServerError("keyID does not match activity", err)
 		return
 	}
-	if activity.AttributedTo != nil && !strings.HasPrefix(keyID, activity.AttributedTo.GetLink().String()) {
-		ctx.ServerError("AttributedTo does not match HTTP signature keyID", nil)
-		return
-	}
-	// TODO: Check activity.Object actor and attributedTo
 
 	// Process activity
 	switch activity.Type {
 	case ap.FollowType:
+		// Following a user
 		err = follow(ctx, activity)
 	case ap.UndoType:
+		// Unfollowing a user
 		err = unfollow(ctx, activity)
 	case ap.CreateType:
 		// TODO: this is kinda a hack
@@ -142,9 +139,7 @@ func PersonInbox(ctx *context.APIContext) {
 			return createComment(ctx, n)
 		})
 	default:
-		log.Info("Incoming unsupported ActivityStreams type: %s", activity.GetType())
-		ctx.PlainText(http.StatusNotImplemented, "ActivityStreams type not supported")
-		return
+		err = fmt.Errorf("unsupported ActivityStreams activity type: %s", activity.GetType())
 	}
 	if err != nil {
 		ctx.ServerError("Could not process activity", err)

@@ -26,3 +26,20 @@ func star(ctx context.Context, like ap.Like) (err error) {
 	}
 	return repo_model.StarRepo(user.ID, repo.ID, true)
 }
+
+// Process an Undo Like activity to unstar a repository
+func unstar(ctx context.Context, unlike ap.Undo) (err error) {
+	like, err := ap.To[ap.Like](unlike.Object)
+	if err != nil {
+		return err
+	}
+	user, err := activitypub.PersonIRIToUser(ctx, like.Actor.GetLink())
+	if err != nil {
+		return
+	}
+	repo, err := activitypub.RepositoryIRIToRepository(ctx, like.Object.GetLink())
+	if err != nil || strings.Contains(repo.Name, "@") || repo.IsPrivate {
+		return
+	}
+	return repo_model.StarRepo(user.ID, repo.ID, false)
+}

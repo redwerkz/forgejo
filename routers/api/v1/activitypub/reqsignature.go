@@ -7,6 +7,7 @@ import (
 	"crypto"
 	"crypto/x509"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -98,4 +99,26 @@ func ReqHTTPSignature() func(ctx *gitea_context.APIContext) {
 			ctx.Error(http.StatusForbidden, "reqSignature", "request signature verification failed")
 		}
 	}
+}
+
+// Check if the keyID matches the activity to prevent impersonation
+func checkActivityAndKeyID(activity ap.Activity, keyID string) error {
+	if activity.Actor != nil && keyID != activity.Actor.GetLink().String() + "#main-key" {
+		return errors.New("actor does not match HTTP signature keyID")
+	}
+	if activity.AttributedTo != nil && keyID != activity.AttributedTo.GetLink().String() + "#main-key" {
+		return errors.New("attributedTo does not match HTTP signature keyID")
+	}
+	if activity.Object == nil {
+		return errors.New("activity does not contain object")
+	}
+	return ap.OnActivity(activity.Object, func(a *ap.Activity) error {
+		if a.Actor != nil && keyID != a.Actor.GetLink().String() + "#main-key" {
+			return errors.New("actor does not match HTTP signature keyID")
+		}
+		if a.AttributedTo != nil && keyID != a.AttributedTo.GetLink().String() + "#main-key" {
+			return errors.New("attributedTo does not match HTTP signature keyID")
+		}
+		return nil
+	})
 }

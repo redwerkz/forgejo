@@ -5,13 +5,13 @@
 package activitypub
 
 import (
+	"fmt"
 	"io"
 	"net/http"
-	"strings"
 
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/forgefed"
-	"code.gitea.io/gitea/modules/log"
+	"code.gitea.io/gitea/modules/setting"
 
 	ap "github.com/go-ap/activitypub"
 )
@@ -87,7 +87,7 @@ func RepoInbox(ctx *context.APIContext) {
 	//   "204":
 	//     "$ref": "#/responses/empty"
 
-	body, err := io.ReadAll(ctx.Req.Body)
+	body, err := io.ReadAll(io.LimitReader(ctx.Req.Body, setting.Federation.MaxSize))
 	if err != nil {
 		ctx.ServerError("Error reading request body", err)
 		return
@@ -105,17 +105,9 @@ func RepoInbox(ctx *context.APIContext) {
 
 	// Make sure keyID matches the user doing the activity
 	_, keyID, _ := getKeyID(ctx.Req)
-	if activity.Actor != nil && !strings.HasPrefix(keyID, activity.Actor.GetLink().String()) {
-		ctx.ServerError("Actor does not match HTTP signature keyID", nil)
-		return
-	}
-	if activity.AttributedTo != nil && !strings.HasPrefix(keyID, activity.AttributedTo.GetLink().String()) {
-		ctx.ServerError("AttributedTo does not match HTTP signature keyID", nil)
-		return
-	}
-
-	if activity.Object == nil {
-		ctx.ServerError("Activity does not contain object", err)
+	err = checkActivityAndKeyID(activity, keyID)
+	if err != nil {
+		ctx.ServerError("keyID does not match activity", err)
 		return
 	}
 
@@ -139,18 +131,20 @@ func RepoInbox(ctx *context.APIContext) {
 				return createComment(ctx, n)
 			})
 		default:
-			log.Info("Incoming unsupported ActivityStreams object type: %s", activity.Object.GetType())
-			ctx.PlainText(http.StatusNotImplemented, "ActivityStreams object type not supported")
-			return
+			err = fmt.Errorf("unsupported ActivityStreams object type: %s", activity.Object.GetType())
 		}
 	case ap.LikeType:
+		// Starring a repo
 		err = star(ctx, activity)
+	case ap.UndoType:
+		// Unstarring a repo
+		err = unstar(ctx, activity)
 	default:
-		ctx.PlainText(http.StatusNotImplemented, "ActivityStreams type not supported")
-		return
+		err = fmt.Errorf("unsupported ActivityStreams activity type: %s", activity.GetType())
 	}
 	if err != nil {
-		ctx.ServerError("Error when processing", err)
+		ctx.ServerError("Could not process activity", err)
+		return
 	}
 
 	ctx.Status(http.StatusNoContent)

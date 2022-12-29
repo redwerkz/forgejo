@@ -16,6 +16,7 @@ import (
 	"code.gitea.io/gitea/modules/convert"
 	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/routers/api/v1/utils"
+	repo_service "code.gitea.io/gitea/services/repository"
 )
 
 // getStarredRepos returns the repos that the user with the specified userID has
@@ -151,7 +152,7 @@ func Star(ctx *context.APIContext) {
 	//   "204":
 	//     "$ref": "#/responses/empty"
 
-	err := repo_model.StarRepo(ctx.Doer.ID, ctx.Repo.Repository.ID, true)
+	err := repo_service.StarRepo(ctx, ctx.Doer.ID, ctx.Repo.Repository.ID, true)
 	if err != nil {
 		ctx.Error(http.StatusInternalServerError, "StarRepo", err)
 		return
@@ -179,7 +180,7 @@ func Unstar(ctx *context.APIContext) {
 	//   "204":
 	//     "$ref": "#/responses/empty"
 
-	err := repo_model.StarRepo(ctx.Doer.ID, ctx.Repo.Repository.ID, false)
+	err := repo_service.StarRepo(ctx, ctx.Doer.ID, ctx.Repo.Repository.ID, false)
 	if err != nil {
 		ctx.Error(http.StatusInternalServerError, "StarRepo", err)
 		return
