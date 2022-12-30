@@ -6,6 +6,7 @@ package activitypub
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	repo_model "code.gitea.io/gitea/models/repo"
@@ -29,9 +30,9 @@ func star(ctx context.Context, like ap.Like) (err error) {
 
 // Process an Undo Like activity to unstar a repository
 func unstar(ctx context.Context, unlike ap.Undo) (err error) {
-	like, err := ap.To[ap.Like](unlike.Object)
-	if err != nil {
-		return err
+	like, ok := unlike.Object.(*ap.Like)
+	if !ok {
+		return errors.New("could not cast object to like")
 	}
 	user, err := activitypub.PersonIRIToUser(ctx, like.Actor.GetLink())
 	if err != nil {

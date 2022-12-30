@@ -16,7 +16,6 @@ import (
 func Follow(actorUser, followUser *user_model.User) (follow *ap.Follow) {
 	object := ap.PersonNew(ap.IRI(followUser.LoginName))
 	follow = ap.FollowNew("", object)
-	follow.Type = ap.FollowType
 	follow.Actor = ap.PersonNew(ap.IRI(actorUser.GetIRI()))
 	follow.To = ap.ItemCollection{ap.Item(ap.IRI(followUser.LoginName + "/inbox"))}
 	return
@@ -24,11 +23,8 @@ func Follow(actorUser, followUser *user_model.User) (follow *ap.Follow) {
 
 // Create Undo Follow activity
 func Unfollow(actorUser, followUser *user_model.User) (unfollow *ap.Undo) {
-	object := ap.PersonNew(ap.IRI(followUser.LoginName))
-	follow := ap.FollowNew("", object)
-	follow.Actor = ap.PersonNew(ap.IRI(actorUser.GetIRI()))
-	unfollow = ap.UndoNew("", follow)
-	unfollow.Type = ap.UndoType
+	unfollow = ap.UndoNew("", Follow(actorUser, followUser))
+	unfollow.Actor = ap.PersonNew(ap.IRI(actorUser.GetIRI()))
 	unfollow.To = ap.ItemCollection{ap.Item(ap.IRI(followUser.LoginName + "/inbox"))}
 	return
 }
@@ -38,5 +34,13 @@ func Star(user *user_model.User, repo *repo_model.Repository) (like *ap.Like) {
 	like = ap.LikeNew("", forgefed.RepositoryNew(ap.IRI(repo.GetIRI())))
 	like.Actor = ap.PersonNew(ap.IRI(user.GetIRI()))
 	like.To = ap.ItemCollection{ap.IRI(repo.GetIRI() + "/inbox")}
+	return
+}
+
+// Create Undo Like activity
+func Unstar(user *user_model.User, repo *repo_model.Repository) (unstar *ap.Undo) {
+	unstar = ap.UndoNew("", Star(user, repo))
+	unstar.Actor = ap.PersonNew(ap.IRI(user.GetIRI()))
+	unstar.To = ap.ItemCollection{ap.IRI(repo.GetIRI() + "/inbox")}
 	return
 }

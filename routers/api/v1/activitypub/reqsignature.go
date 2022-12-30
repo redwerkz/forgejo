@@ -112,13 +112,16 @@ func checkActivityAndKeyID(activity ap.Activity, keyID string) error {
 	if activity.Object == nil {
 		return errors.New("activity does not contain object")
 	}
-	return ap.OnActivity(activity.Object, func(a *ap.Activity) error {
-		if a.Actor != nil && keyID != a.Actor.GetLink().String() + "#main-key" {
-			return errors.New("actor does not match HTTP signature keyID")
-		}
-		if a.AttributedTo != nil && keyID != a.AttributedTo.GetLink().String() + "#main-key" {
-			return errors.New("attributedTo does not match HTTP signature keyID")
-		}
-		return nil
-	})
+	if activity.Type == ap.UndoType {
+		return ap.OnActivity(activity.Object, func(a *ap.Activity) error {
+			if a.Actor != nil && keyID != a.Actor.GetLink().String() + "#main-key" {
+				return errors.New("actor does not match HTTP signature keyID")
+			}
+			if a.AttributedTo != nil && keyID != a.AttributedTo.GetLink().String() + "#main-key" {
+				return errors.New("attributedTo does not match HTTP signature keyID")
+			}
+			return nil
+		})
+	}
+	return nil
 }

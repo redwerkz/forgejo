@@ -6,6 +6,7 @@ package activitypub
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	user_model "code.gitea.io/gitea/models/user"
@@ -47,9 +48,9 @@ func follow(ctx context.Context, follow ap.Follow) error {
 // Process an incoming Undo follow activity
 func unfollow(ctx context.Context, unfollow ap.Undo) error {
 	// Object contains the follow
-	follow, err := ap.To[ap.Follow](unfollow.Object)
-	if err != nil {
-		return err
+	follow, ok := unfollow.Object.(*ap.Follow)
+	if !ok {
+		return errors.New("could not cast object to follow")
 	}
 
 	// Actor is the user performing the undo follow
