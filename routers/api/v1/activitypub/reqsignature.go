@@ -103,10 +103,10 @@ func ReqHTTPSignature() func(ctx *gitea_context.APIContext) {
 
 // Check if the keyID matches the activity to prevent impersonation
 func checkActivityAndKeyID(activity ap.Activity, keyID string) error {
-	if activity.Actor != nil && keyID != activity.Actor.GetLink().String() + "#main-key" {
+	if activity.Actor != nil && keyID != activity.Actor.GetLink().String()+"#main-key" {
 		return errors.New("actor does not match HTTP signature keyID")
 	}
-	if activity.AttributedTo != nil && keyID != activity.AttributedTo.GetLink().String() + "#main-key" {
+	if activity.AttributedTo != nil && keyID != activity.AttributedTo.GetLink().String()+"#main-key" {
 		return errors.New("attributedTo does not match HTTP signature keyID")
 	}
 	if activity.Object == nil {
@@ -114,10 +114,10 @@ func checkActivityAndKeyID(activity ap.Activity, keyID string) error {
 	}
 	if activity.Type == ap.UndoType {
 		return ap.OnActivity(activity.Object, func(a *ap.Activity) error {
-			if a.Actor != nil && keyID != a.Actor.GetLink().String() + "#main-key" {
+			if a.Actor != nil && keyID != a.Actor.GetLink().String()+"#main-key" {
 				return errors.New("actor does not match HTTP signature keyID")
 			}
-			if a.AttributedTo != nil && keyID != a.AttributedTo.GetLink().String() + "#main-key" {
+			if a.AttributedTo != nil && keyID != a.AttributedTo.GetLink().String()+"#main-key" {
 				return errors.New("attributedTo does not match HTTP signature keyID")
 			}
 			return nil
