@@ -40,11 +40,6 @@ func PersonIRIToUser(ctx context.Context, personIRI ap.IRI) (*user_model.User, e
 		return nil, err
 	}
 
-	user, err := user_model.GetUserByName(ctx, name)
-	if err != nil && !strings.Contains(name, "@") {
-		return user, err
-	}
-
 	return user_model.GetUserByName(ctx, name)
 }
 
@@ -73,7 +68,6 @@ func RepositoryIRIToRepository(ctx context.Context, repoIRI ap.IRI) (*repo_model
 		return nil, err
 	}
 
-	// TODO: create remote repo if not exists
 	return repo_model.GetRepositoryByOwnerAndName(ctx, username, reponame)
 }
 
