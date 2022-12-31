@@ -774,9 +774,9 @@ func FixNullArchivedRepository(ctx context.Context) (int64, error) {
 	})
 }
 
-func (r *Repository) GetIRI() string {
-	if strings.Contains(r.OwnerName, "@") {
-		return r.OriginalURL
+func (repo *Repository) GetIRI() string {
+	if strings.Contains(repo.OwnerName, "@") {
+		return repo.OriginalURL
 	}
-	return setting.AppURL + "api/v1/activitypub/repo/" + r.OwnerName + "/" + r.Name
+	return setting.AppURL + "api/v1/activitypub/repo/" + repo.OwnerName + "/" + repo.Name
 }
