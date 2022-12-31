@@ -50,3 +50,13 @@ func Unstar(user *user_model.User, repo *repo_model.Repository) *ap.Undo {
 		To:     ap.ItemCollection{ap.IRI(repo.GetIRI() + "/inbox")},
 	}
 }
+
+// Create Create activity
+func Create(user *user_model.User, object ap.ObjectOrLink, to string) *ap.Create {
+	return &ap.Create{
+		Type:   ap.CreateType,
+		Actor:  ap.IRI(user.GetIRI()),
+		Object: object,
+		To:     ap.ItemCollection{ap.Item(ap.IRI(to))},
+	}
+}
