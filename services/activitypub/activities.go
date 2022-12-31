@@ -55,7 +55,7 @@ func Unstar(user *user_model.User, repo *repo_model.Repository) *ap.Undo {
 func Create(user *user_model.User, object ap.ObjectOrLink, to string) *ap.Create {
 	return &ap.Create{
 		Type:   ap.CreateType,
-		Actor:  ap.IRI(user.GetIRI()),
+		Actor:  ap.PersonNew(ap.IRI(user.GetIRI())),
 		Object: object,
 		To:     ap.ItemCollection{ap.Item(ap.IRI(to))},
 	}
