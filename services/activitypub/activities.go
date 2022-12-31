@@ -13,33 +13,40 @@ import (
 
 // Create Follow activity
 func Follow(actorUser, followUser *user_model.User) *ap.Follow {
-	object := ap.PersonNew(ap.IRI(followUser.LoginName))
-	follow := ap.FollowNew("", object)
-	follow.Actor = ap.PersonNew(ap.IRI(actorUser.GetIRI()))
-	follow.To = ap.ItemCollection{ap.Item(ap.IRI(followUser.LoginName + "/inbox"))}
-	return follow
+	return &ap.Follow{
+		Type:   ap.FollowType,
+		Actor:  ap.PersonNew(ap.IRI(actorUser.GetIRI())),
+		Object: ap.PersonNew(ap.IRI(followUser.LoginName)),
+		To:     ap.ItemCollection{ap.Item(ap.IRI(followUser.LoginName + "/inbox"))},
+	}
 }
 
 // Create Undo Follow activity
 func Unfollow(actorUser, followUser *user_model.User) *ap.Undo {
-	unfollow := ap.UndoNew("", Follow(actorUser, followUser))
-	unfollow.Actor = ap.PersonNew(ap.IRI(actorUser.GetIRI()))
-	unfollow.To = ap.ItemCollection{ap.Item(ap.IRI(followUser.LoginName + "/inbox"))}
-	return unfollow
+	return &ap.Undo{
+		Type:   ap.UndoType,
+		Actor:  ap.PersonNew(ap.IRI(actorUser.GetIRI())),
+		Object: Follow(actorUser, followUser),
+		To:     ap.ItemCollection{ap.Item(ap.IRI(followUser.LoginName + "/inbox"))},
+	}
 }
 
 // Create Like activity
 func Star(user *user_model.User, repo *repo_model.Repository) *ap.Like {
-	like := ap.LikeNew("", forgefed.RepositoryNew(ap.IRI(repo.GetIRI())))
-	like.Actor = ap.PersonNew(ap.IRI(user.GetIRI()))
-	like.To = ap.ItemCollection{ap.IRI(repo.GetIRI() + "/inbox")}
-	return like
+	return &ap.Like{
+		Type:   ap.LikeType,
+		Actor:  ap.PersonNew(ap.IRI(user.GetIRI())),
+		Object: forgefed.RepositoryNew(ap.IRI(repo.GetIRI())),
+		To:     ap.ItemCollection{ap.IRI(repo.GetIRI() + "/inbox")},
+	}
 }
 
 // Create Undo Like activity
 func Unstar(user *user_model.User, repo *repo_model.Repository) *ap.Undo {
-	unlike := ap.UndoNew("", Star(user, repo))
-	unlike.Actor = ap.PersonNew(ap.IRI(user.GetIRI()))
-	unlike.To = ap.ItemCollection{ap.IRI(repo.GetIRI() + "/inbox")}
-	return unlike
+	return &ap.Undo{
+		Type:   ap.UndoType,
+		Actor:  ap.PersonNew(ap.IRI(user.GetIRI())),
+		Object: Star(user, repo),
+		To:     ap.ItemCollection{ap.IRI(repo.GetIRI() + "/inbox")},
+	}
 }
