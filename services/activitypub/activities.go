@@ -57,6 +57,6 @@ func Create(user *user_model.User, object ap.ObjectOrLink, to string) *ap.Create
 		Type:   ap.CreateType,
 		Actor:  ap.PersonNew(ap.IRI(user.GetIRI())),
 		Object: object,
-		To:     ap.ItemCollection{ap.Item(ap.IRI(to))},
+		To:     ap.ItemCollection{ap.Item(ap.IRI(to + "/inbox"))},
 	}
 }
