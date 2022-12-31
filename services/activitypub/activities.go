@@ -16,8 +16,8 @@ func Follow(actorUser, followUser *user_model.User) *ap.Follow {
 	return &ap.Follow{
 		Type:   ap.FollowType,
 		Actor:  ap.PersonNew(ap.IRI(actorUser.GetIRI())),
-		Object: ap.PersonNew(ap.IRI(followUser.LoginName)),
-		To:     ap.ItemCollection{ap.Item(ap.IRI(followUser.LoginName + "/inbox"))},
+		Object: ap.PersonNew(ap.IRI(followUser.GetIRI())),
+		To:     ap.ItemCollection{ap.Item(ap.IRI(followUser.GetIRI() + "/inbox"))},
 	}
 }
 
@@ -27,7 +27,7 @@ func Unfollow(actorUser, followUser *user_model.User) *ap.Undo {
 		Type:   ap.UndoType,
 		Actor:  ap.PersonNew(ap.IRI(actorUser.GetIRI())),
 		Object: Follow(actorUser, followUser),
-		To:     ap.ItemCollection{ap.Item(ap.IRI(followUser.LoginName + "/inbox"))},
+		To:     ap.ItemCollection{ap.Item(ap.IRI(followUser.GetIRI() + "/inbox"))},
 	}
 }
 
