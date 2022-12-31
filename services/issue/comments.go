@@ -86,7 +86,7 @@ func CreateIssueComment(ctx context.Context, doer *user_model.User, repo *repo_m
 		if err != nil {
 			return nil, err
 		}
-		create := activitypub.Create(repo.OriginalURL+"/inbox", note)
+		create := activitypub.Create(doer, note, repo.OriginalURL+"/inbox")
 		err = activitypub.Send(doer, create)
 		if err != nil {
 			return nil, err
