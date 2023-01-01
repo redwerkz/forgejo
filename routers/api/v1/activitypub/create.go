@@ -213,7 +213,7 @@ func createIssue(ctx context.Context, ticket *forgefed.Ticket) error {
 		return err
 	}
 	issue := &issues_model.Issue{
-		Index:          idx, // This doesn't seem to work?
+		Index:          idx, // TODO: This doesn't seem to work?
 		RepoID:         repo.ID,
 		Repo:           repo,
 		Title:          ticket.Summary.String(),
