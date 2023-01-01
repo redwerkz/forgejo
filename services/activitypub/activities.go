@@ -17,7 +17,7 @@ func Follow(actorUser, followUser *user_model.User) *ap.Follow {
 		Type:   ap.FollowType,
 		Actor:  ap.PersonNew(ap.IRI(actorUser.GetIRI())),
 		Object: ap.PersonNew(ap.IRI(followUser.GetIRI())),
-		To:     ap.ItemCollection{ap.Item(ap.IRI(followUser.GetIRI() + "/inbox"))},
+		To:     ap.ItemCollection{ap.IRI(followUser.GetIRI() + "/inbox")},
 	}
 }
 
@@ -27,7 +27,7 @@ func Unfollow(actorUser, followUser *user_model.User) *ap.Undo {
 		Type:   ap.UndoType,
 		Actor:  ap.PersonNew(ap.IRI(actorUser.GetIRI())),
 		Object: Follow(actorUser, followUser),
-		To:     ap.ItemCollection{ap.Item(ap.IRI(followUser.GetIRI() + "/inbox"))},
+		To:     ap.ItemCollection{ap.IRI(followUser.GetIRI() + "/inbox")},
 	}
 }
 
@@ -57,6 +57,6 @@ func Create(user *user_model.User, object ap.ObjectOrLink, to string) *ap.Create
 		Type:   ap.CreateType,
 		Actor:  ap.PersonNew(ap.IRI(user.GetIRI())),
 		Object: object,
-		To:     ap.ItemCollection{ap.Item(ap.IRI(to + "/inbox"))},
+		To:     ap.ItemCollection{ap.IRI(to + "/inbox")},
 	}
 }
