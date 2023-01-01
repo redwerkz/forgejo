@@ -16,7 +16,7 @@ func Note(ctx *context.APIContext) {
 	// swagger:operation GET /activitypub/note/{username}/{reponame}/{id}/{noteid} activitypub activitypubNote
 	// ---
 	// summary: Returns the Note object for a comment to an issue or PR
-	// produces
+	// produces:
 	// - application/activity+json
 	// parameters:
 	// - name: username
