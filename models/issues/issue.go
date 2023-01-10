@@ -13,7 +13,6 @@ import (
 	"strings"
 
 	"code.gitea.io/gitea/models/db"
-	"code.gitea.io/gitea/models/foreignreference"
 	"code.gitea.io/gitea/models/organization"
 	"code.gitea.io/gitea/models/perm"
 	access_model "code.gitea.io/gitea/models/perm/access"
@@ -137,12 +136,11 @@ type Issue struct {
 	UpdatedUnix timeutil.TimeStamp `xorm:"INDEX updated"`
 	ClosedUnix  timeutil.TimeStamp `xorm:"INDEX"`
 
-	Attachments      []*repo_model.Attachment           `xorm:"-"`
-	Comments         []*Comment                         `xorm:"-"`
-	Reactions        ReactionList                       `xorm:"-"`
-	TotalTrackedTime int64                              `xorm:"-"`
-	Assignees        []*user_model.User                 `xorm:"-"`
-	ForeignReference *foreignreference.ForeignReference `xorm:"-"`
+	Attachments      []*repo_model.Attachment `xorm:"-"`
+	Comments         []*Comment               `xorm:"-"`
+	Reactions        ReactionList             `xorm:"-"`
+	TotalTrackedTime int64                    `xorm:"-"`
+	Assignees        []*user_model.User       `xorm:"-"`
 
 	// IsLocked limits commenting abilities to users on an issue
 	// with write access
@@ -322,29 +320,6 @@ func (issue *Issue) loadReactions(ctx context.Context) (err error) {
 	return nil
 }
 
-func (issue *Issue) loadForeignReference(ctx context.Context) (err error) {
-	if issue.ForeignReference != nil {
-		return nil
-	}
-	reference := &foreignreference.ForeignReference{
-		RepoID:     issue.RepoID,
-		LocalIndex: issue.Index,
-		Type:       foreignreference.TypeIssue,
-	}
-	has, err := db.GetEngine(ctx).Get(reference)
-	if err != nil {
-		return err
-	} else if !has {
-		return foreignreference.ErrForeignIndexNotExist{
-			RepoID:     issue.RepoID,
-			LocalIndex: issue.Index,
-			Type:       foreignreference.TypeIssue,
-		}
-	}
-	issue.ForeignReference = reference
-	return nil
-}
-
 // LoadMilestone load milestone of this issue.
 func (issue *Issue) LoadMilestone(ctx context.Context) (err error) {
 	if (issue.Milestone == nil || issue.Milestone.ID != issue.MilestoneID) && issue.MilestoneID > 0 {
@@ -405,10 +380,6 @@ func (issue *Issue) LoadAttributes(ctx context.Context) (err error) {
 		if err = issue.LoadTotalTimes(ctx); err != nil {
 			return err
 		}
-	}
-
-	if err = issue.loadForeignReference(ctx); err != nil && !foreignreference.IsErrForeignIndexNotExist(err) {
-		return err
 	}
 
 	return issue.loadReactions(ctx)
@@ -1096,26 +1067,6 @@ func GetIssueByIndex(repoID, index int64) (*Issue, error) {
 		return nil, ErrIssueNotExist{0, repoID, index}
 	}
 	return issue, nil
-}
-
-// GetIssueByForeignIndex returns raw issue by foreign ID
-func GetIssueByForeignIndex(ctx context.Context, repoID, foreignIndex int64) (*Issue, error) {
-	reference := &foreignreference.ForeignReference{
-		RepoID:       repoID,
-		ForeignIndex: strconv.FormatInt(foreignIndex, 10),
-		Type:         foreignreference.TypeIssue,
-	}
-	has, err := db.GetEngine(ctx).Get(reference)
-	if err != nil {
-		return nil, err
-	} else if !has {
-		return nil, foreignreference.ErrLocalIndexNotExist{
-			RepoID:       repoID,
-			ForeignIndex: foreignIndex,
-			Type:         foreignreference.TypeIssue,
-		}
-	}
-	return GetIssueByIndex(repoID, reference.LocalIndex)
 }
 
 // GetIssueWithAttrsByIndex returns issue by index in a repository.
@@ -2416,7 +2367,7 @@ func CountOrphanedIssues(ctx context.Context) (int64, error) {
 // DeleteOrphanedIssues delete issues without a repo
 func DeleteOrphanedIssues(ctx context.Context) error {
 	var attachmentPaths []string
-	err := db.AutoTx(ctx, func(ctx context.Context) error {
+	err := db.WithTx(ctx, func(ctx context.Context) error {
 		var ids []int64
 
 		if err := db.GetEngine(ctx).Table("issue").Distinct("issue.repo_id").
