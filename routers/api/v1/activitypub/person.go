@@ -138,6 +138,9 @@ func PersonInbox(ctx *context.APIContext) {
 			n.Context = ap.IRI(strings.TrimSuffix(noteIRI, "/"+noteIRISplit[len(noteIRISplit)-1]))
 			return createComment(ctx, n)
 		})
+	case ap.DeleteType:
+		// Deleting a user
+		delete(ctx, activity)
 	default:
 		err = fmt.Errorf("unsupported ActivityStreams activity type: %s", activity.GetType())
 	}
