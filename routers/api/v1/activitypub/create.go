@@ -87,14 +87,14 @@ func createPerson(ctx context.Context, person *ap.Person) error {
 		LoginName:                    person.GetLink().String(),
 		EmailNotificationsPreference: user_model.EmailNotificationsDisabled,
 	}
+	if person.Name != nil {
+		user.FullName = person.Name.String()
+	}
 	err = user_model.CreateUser(user)
 	if err != nil {
 		return err
 	}
-
-	if person.Name != nil {
-		user.FullName = person.Name.String()
-	}
+	
 	if person.Icon != nil {
 		// Fetch and save user icon
 		icon, err := ap.ToObject(person.Icon)
