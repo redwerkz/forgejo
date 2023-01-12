@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"strconv"
 
+	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/forgefed"
 	"code.gitea.io/gitea/modules/setting"
@@ -51,12 +52,12 @@ func AuthorizeInteraction(ctx *context.Context) {
 			ctx.ServerError("FederatedUserNew", err)
 			return
 		}
-		name, err := activitypub.PersonIRIToName(object.GetLink())
+		user, err := user_model.GetUserByIRI(ctx, object.GetLink().String())
 		if err != nil {
-			ctx.ServerError("PersonIRIToName", err)
+			ctx.ServerError("GetUserByIRI", err)
 			return
 		}
-		ctx.Redirect(setting.AppURL + name)
+		ctx.Redirect(setting.AppURL + user.Name)
 	case forgefed.RepositoryType:
 		// Federated repository
 		err = forgefed.OnRepository(object, func(r *forgefed.Repository) error {

@@ -1,0 +1,17 @@
+package activitypub;
+
+type WebfingerJRD struct {
+	Subject    string                 `json:"subject,omitempty"`
+	Aliases    []string               `json:"aliases,omitempty"`
+	Properties map[string]interface{} `json:"properties,omitempty"`
+	Links      []*WebfingerLink       `json:"links,omitempty"`
+}
+
+type WebfingerLink struct {
+	Rel        string                 `json:"rel,omitempty"`
+	Type       string                 `json:"type,omitempty"`
+	Href       string                 `json:"href,omitempty"`
+	Template   string                 `json:"template,omitempty"`
+	Titles     map[string]string      `json:"titles,omitempty"`
+	Properties map[string]interface{} `json:"properties,omitempty"`
+}

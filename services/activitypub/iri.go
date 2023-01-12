@@ -9,39 +9,10 @@ import (
 	"strings"
 
 	repo_model "code.gitea.io/gitea/models/repo"
-	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/setting"
 
 	ap "github.com/go-ap/activitypub"
 )
-
-// Returns the username corresponding to a Person actor IRI
-func PersonIRIToName(personIRI ap.IRI) (string, error) {
-	personIRISplit := strings.Split(personIRI.String(), "/")
-	if len(personIRISplit) < 4 {
-		return "", errors.New("not a Person actor IRI")
-	}
-
-	instance := personIRISplit[2]
-	name := personIRISplit[len(personIRISplit)-1]
-	if instance == setting.Domain {
-		// Local user
-		return name, nil
-	}
-	// Remote user
-	// Get name in username@instance.com format
-	return name + "@" + instance, nil
-}
-
-// Returns the user corresponding to a Person actor IRI
-func PersonIRIToUser(ctx context.Context, personIRI ap.IRI) (*user_model.User, error) {
-	name, err := PersonIRIToName(personIRI)
-	if err != nil {
-		return nil, err
-	}
-
-	return user_model.GetUserByName(ctx, name)
-}
 
 // Returns the owner and name corresponding to a Repository actor IRI
 func RepositoryIRIToName(repoIRI ap.IRI) (string, string, error) {

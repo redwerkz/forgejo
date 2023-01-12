@@ -6,8 +6,8 @@ package activitypub
 import (
 	"context"
 
+	user_model "code.gitea.io/gitea/models/user"
 	user_service "code.gitea.io/gitea/services/user"
-	"code.gitea.io/gitea/services/activitypub"
 
 	ap "github.com/go-ap/activitypub"
 )
@@ -20,9 +20,9 @@ func delete(ctx context.Context, delete ap.Delete) error {
 	if actorIRI != objectIRI {
 		return nil
 	}
-	
+
 	// Object is the user getting deleted
-	objectUser, err := activitypub.PersonIRIToUser(ctx, objectIRI)
+	objectUser, err := user_model.GetUserByIRI(ctx, objectIRI.String())
 	if err != nil {
 		return err
 	}

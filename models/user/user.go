@@ -9,6 +9,7 @@ import (
 	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -1024,6 +1025,29 @@ func GetUserByName(ctx context.Context, name string) (*User, error) {
 		return nil, err
 	} else if !has {
 		return nil, ErrUserNotExist{0, name, 0}
+	}
+	return u, nil
+}
+
+// GetUserByIRI returns user by given IRI.
+func GetUserByIRI(ctx context.Context, iri string) (*User, error) {
+	if len(iri) == 0 {
+		return nil, ErrUserNotExist{0, iri, 0}
+	}
+	iriSplit := strings.Split(iri, "/")
+	if len(iriSplit) < 4 {
+		return nil, errors.New("not a Person actor IRI")
+	}
+	if iriSplit[2] == setting.Domain {
+		// Local user
+		return GetUserByName(ctx, iriSplit[len(iriSplit)-1])
+	}
+	u := &User{LoginName: iri}
+	has, err := db.GetEngine(ctx).Get(u)
+	if err != nil {
+		return nil, err
+	} else if !has {
+		return nil, ErrUserNotExist{0, iri, 0}
 	}
 	return u, nil
 }

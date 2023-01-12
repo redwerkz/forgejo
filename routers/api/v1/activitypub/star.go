@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	repo_model "code.gitea.io/gitea/models/repo"
+	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/services/activitypub"
 
 	ap "github.com/go-ap/activitypub"
@@ -16,7 +17,7 @@ import (
 
 // Process a Like activity to star a repository
 func star(ctx context.Context, like ap.Like) (err error) {
-	user, err := activitypub.PersonIRIToUser(ctx, like.Actor.GetLink())
+	user, err := user_model.GetUserByIRI(ctx, like.Actor.GetLink().String())
 	if err != nil {
 		return
 	}
@@ -33,7 +34,7 @@ func unstar(ctx context.Context, unlike ap.Undo) (err error) {
 	if !ok {
 		return errors.New("could not cast object to like")
 	}
-	user, err := activitypub.PersonIRIToUser(ctx, like.Actor.GetLink())
+	user, err := user_model.GetUserByIRI(ctx, like.Actor.GetLink().String())
 	if err != nil {
 		return
 	}

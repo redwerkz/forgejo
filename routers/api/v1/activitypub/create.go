@@ -5,6 +5,7 @@ package activitypub
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"net/url"
 	"strconv"
@@ -26,20 +27,46 @@ import (
 	ap "github.com/go-ap/activitypub"
 )
 
+
 // Create a new federated user from a Person object
 func createPerson(ctx context.Context, person *ap.Person) error {
-	name, err := activitypub.PersonIRIToName(person.GetLink())
-	if err != nil {
+	_, err := user_model.GetUserByIRI(ctx, person.GetLink().String())
+	if user_model.IsErrUserNotExist(err) {
+		// User already exists
 		return err
 	}
 
-	exists, err := user_model.IsUserExist(ctx, 0, name)
+	personIRISplit := strings.Split(person.GetLink().String(), "/")
+	if len(personIRISplit) < 4 {
+		return errors.New("not a Person actor IRI")
+	}
+
+	// Get instance by taking the domain of the IRI
+	instance := personIRISplit[2]
+	if instance == setting.Domain {
+		// Local user
+		return nil
+	}
+
+	// Send a WebFinger request to get the username
+	uri, err := url.Parse("https://" + instance + "/.well-known/webfinger?resource=" + person.GetLink().String())
 	if err != nil {
 		return err
 	}
-	if exists {
-		return nil
+	resp, err := activitypub.Fetch(uri)
+	if err != nil {
+		return err
 	}
+	var data activitypub.WebfingerJRD
+	err = json.Unmarshal(resp, &data)
+	if err != nil {
+		return err
+	}
+	subjectSplit := strings.Split(data.Subject, ":")
+	if subjectSplit[0] != "acct" {
+		return errors.New("subject is not an acct URI")
+	}
+	name := subjectSplit[1]
 
 	var email string
 	if person.Location != nil {
@@ -55,7 +82,6 @@ func createPerson(ctx context.Context, person *ap.Person) error {
 
 	user := &user_model.User{
 		Name:                         name,
-		FullName:                     person.Name.String(), // May not exist!!
 		Email:                        email,
 		LoginType:                    auth.Federated,
 		LoginName:                    person.GetLink().String(),
@@ -66,7 +92,11 @@ func createPerson(ctx context.Context, person *ap.Person) error {
 		return err
 	}
 
+	if person.Name != nil {
+		user.FullName = person.Name.String()
+	}
 	if person.Icon != nil {
+		// Fetch and save user icon
 		icon, err := ap.ToObject(person.Icon)
 		if err != nil {
 			return err
@@ -75,12 +105,10 @@ func createPerson(ctx context.Context, person *ap.Person) error {
 		if err != nil {
 			return err
 		}
-
 		body, err := activitypub.Fetch(iconURL)
 		if err != nil {
 			return err
 		}
-
 		err = user_service.UploadAvatar(user, body)
 		if err != nil {
 			return err
@@ -91,44 +119,13 @@ func createPerson(ctx context.Context, person *ap.Person) error {
 	if err != nil {
 		return err
 	}
+	// Set public key
 	return user_model.SetUserSetting(user.ID, user_model.UserActivityPubPubPem, person.PublicKey.PublicKeyPem)
-}
-
-func createPersonFromIRI(ctx context.Context, personIRI ap.IRI) error {
-	ownerURL, err := url.Parse(personIRI.String())
-	if err != nil {
-		return err
-	}
-	// Fetch person object
-	resp, err := activitypub.Fetch(ownerURL)
-	if err != nil {
-		return err
-	}
-
-	// Parse person object
-	ap.ItemTyperFunc = forgefed.GetItemByType
-	ap.JSONItemUnmarshal = forgefed.JSONUnmarshalerFn
-	ap.NotEmptyChecker = forgefed.NotEmpty
-	object, err := ap.UnmarshalJSON(resp)
-	if err != nil {
-		return err
-	}
-
-	// Create federated user
-	person, err := ap.ToActor(object)
-	if err != nil {
-		return err
-	}
-	return createPerson(ctx, person)
 }
 
 // Create a new federated repo from a Repository object
 func createRepository(ctx context.Context, repository *forgefed.Repository) error {
-	err := createPersonFromIRI(ctx, repository.AttributedTo.GetLink())
-	if err != nil {
-		return err
-	}
-	user, err := activitypub.PersonIRIToUser(ctx, repository.AttributedTo.GetLink())
+	user, err := user_model.GetUserByIRI(ctx, repository.AttributedTo.GetLink().String())
 	if err != nil {
 		return err
 	}
@@ -200,7 +197,7 @@ func createIssue(ctx context.Context, ticket *forgefed.Ticket) error {
 	}
 
 	// Construct issue
-	user, err := activitypub.PersonIRIToUser(ctx, ap.IRI(ticket.AttributedTo.GetLink().String()))
+	user, err := user_model.GetUserByIRI(ctx, ticket.AttributedTo.GetLink().String())
 	if err != nil {
 		return err
 	}
@@ -233,7 +230,7 @@ func createPullRequest(ctx context.Context, ticket *forgefed.Ticket) error {
 		return err
 	}
 
-	user, err := activitypub.PersonIRIToUser(ctx, ticket.AttributedTo.GetLink())
+	user, err := user_model.GetUserByIRI(ctx, ticket.AttributedTo.GetLink().String())
 	if err != nil {
 		return err
 	}
@@ -285,12 +282,7 @@ func createPullRequest(ctx context.Context, ticket *forgefed.Ticket) error {
 
 // Create a comment
 func createComment(ctx context.Context, note *ap.Note) error {
-	err := createPersonFromIRI(ctx, note.AttributedTo.GetLink())
-	if err != nil {
-		return err
-	}
-
-	user, err := activitypub.PersonIRIToUser(ctx, note.AttributedTo.GetLink())
+	user, err := user_model.GetUserByIRI(ctx, note.AttributedTo.GetLink().String())
 	if err != nil {
 		return err
 	}

@@ -13,25 +13,10 @@ import (
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
+	"code.gitea.io/gitea/services/activitypub"
 )
 
 // https://datatracker.ietf.org/doc/html/draft-ietf-appsawg-webfinger-14#section-4.4
-
-type webfingerJRD struct {
-	Subject    string                 `json:"subject,omitempty"`
-	Aliases    []string               `json:"aliases,omitempty"`
-	Properties map[string]interface{} `json:"properties,omitempty"`
-	Links      []*webfingerLink       `json:"links,omitempty"`
-}
-
-type webfingerLink struct {
-	Rel        string                 `json:"rel,omitempty"`
-	Type       string                 `json:"type,omitempty"`
-	Href       string                 `json:"href,omitempty"`
-	Template   string                 `json:"template,omitempty"`
-	Titles     map[string]string      `json:"titles,omitempty"`
-	Properties map[string]interface{} `json:"properties,omitempty"`
-}
 
 // WebfingerQuery returns information about a resource
 // https://datatracker.ietf.org/doc/html/rfc7565
@@ -65,6 +50,8 @@ func WebfingerQuery(ctx *context.Context) {
 		if u != nil && u.KeepEmailPrivate {
 			err = user_model.ErrUserNotExist{}
 		}
+	case "https":
+		u, err = user_model.GetUserByIRI(ctx, ctx.FormString("resource"))
 	default:
 		ctx.Error(http.StatusBadRequest)
 		return
@@ -92,7 +79,7 @@ func WebfingerQuery(ctx *context.Context) {
 		aliases = append(aliases, fmt.Sprintf("mailto:%s", u.Email))
 	}
 
-	links := []*webfingerLink{
+	links := []*activitypub.WebfingerLink{
 		{
 			Rel:  "http://webfinger.net/rel/profile-page",
 			Type: "text/html",
@@ -114,7 +101,7 @@ func WebfingerQuery(ctx *context.Context) {
 	}
 
 	ctx.Resp.Header().Add("Access-Control-Allow-Origin", "*")
-	ctx.JSON(http.StatusOK, &webfingerJRD{
+	ctx.JSON(http.StatusOK, &activitypub.WebfingerJRD{
 		Subject: fmt.Sprintf("acct:%s@%s", url.QueryEscape(u.Name), appURL.Host),
 		Aliases: aliases,
 		Links:   links,
