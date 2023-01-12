@@ -1,4 +1,4 @@
-// Copyright 2022 The Gitea Authors. All rights reserved.
+// Copyright 2023 The Forgejo Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 package activitypub
@@ -140,7 +140,7 @@ func PersonInbox(ctx *context.APIContext) {
 		})
 	case ap.DeleteType:
 		// Deleting a user
-		delete(ctx, activity)
+		err = delete(ctx, activity)
 	default:
 		err = fmt.Errorf("unsupported ActivityStreams activity type: %s", activity.GetType())
 	}

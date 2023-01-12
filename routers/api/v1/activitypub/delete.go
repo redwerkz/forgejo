@@ -1,4 +1,4 @@
-// Copyright 2022 The Gitea Authors. All rights reserved.
+// Copyright 2023 The Forgejo Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 package activitypub
@@ -26,6 +26,5 @@ func delete(ctx context.Context, delete ap.Delete) error {
 	if err != nil {
 		return err
 	}
-	user_service.DeleteUser(ctx, objectUser, true)
-	return nil
+	return user_service.DeleteUser(ctx, objectUser, true)
 }

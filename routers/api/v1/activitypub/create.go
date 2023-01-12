@@ -1,11 +1,10 @@
-// Copyright 2022 The Gitea Authors. All rights reserved.
+// Copyright 2023 The Forgejo Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 package activitypub
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"net/url"
 	"strconv"
@@ -16,6 +15,7 @@ import (
 	repo_model "code.gitea.io/gitea/models/repo"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/forgefed"
+	"code.gitea.io/gitea/modules/json"
 	repo_module "code.gitea.io/gitea/modules/repository"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/services/activitypub"
@@ -26,7 +26,6 @@ import (
 
 	ap "github.com/go-ap/activitypub"
 )
-
 
 // Create a new federated user from a Person object
 func createPerson(ctx context.Context, person *ap.Person) error {
@@ -94,7 +93,7 @@ func createPerson(ctx context.Context, person *ap.Person) error {
 	if err != nil {
 		return err
 	}
-	
+
 	if person.Icon != nil {
 		// Fetch and save user icon
 		icon, err := ap.ToObject(person.Icon)

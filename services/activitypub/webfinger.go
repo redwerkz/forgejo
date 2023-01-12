@@ -1,4 +1,7 @@
-package activitypub;
+// Copyright 2023 The Forgejo Authors. All rights reserved.
+// SPDX-License-Identifier: MIT
+
+package activitypub
 
 type WebfingerJRD struct {
 	Subject    string                 `json:"subject,omitempty"`
