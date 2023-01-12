@@ -31,7 +31,7 @@ import (
 // Create a new federated user from a Person object
 func createPerson(ctx context.Context, person *ap.Person) error {
 	_, err := user_model.GetUserByIRI(ctx, person.GetLink().String())
-	if user_model.IsErrUserNotExist(err) {
+	if !user_model.IsErrUserNotExist(err) {
 		// User already exists
 		return err
 	}
