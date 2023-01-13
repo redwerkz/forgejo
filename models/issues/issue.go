@@ -2398,8 +2398,8 @@ func DeleteOrphanedIssues(ctx context.Context) error {
 	return nil
 }
 
-func (issue *Issue) GetIRI() string {
-	err := issue.LoadRepo(db.DefaultContext)
+func (issue *Issue) GetIRI(ctx context.Context) string {
+	err := issue.LoadRepo(ctx)
 	if err != nil {
 		log.Error(fmt.Sprintf("loadRepo: %v", err))
 	}

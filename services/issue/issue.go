@@ -29,7 +29,7 @@ func NewIssue(repo *repo_model.Repository, issue *issues_model.Issue, labelIDs [
 
 	if strings.Contains(repo.OwnerName, "@") {
 		// Federated issue
-		ticket, err := activitypub.Ticket(issue)
+		ticket, err := activitypub.Ticket(db.DefaultContext, issue)
 		if err != nil {
 			return err
 		}

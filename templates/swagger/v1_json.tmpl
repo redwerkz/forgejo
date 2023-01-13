@@ -23,7 +23,7 @@
   },
   "basePath": "{{AppSubUrl | JSEscape | Safe}}/api/v1",
   "paths": {
-    "/activitypub/note/{username}/{reponame}/{id}/{noteid}": {
+    "/activitypub/note/{username}/{reponame}/{noteid}": {
       "get": {
         "produces": [
           "application/activity+json"
@@ -50,13 +50,6 @@
           },
           {
             "type": "string",
-            "description": "ID number of the issue or PR",
-            "name": "id",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
             "description": "ID number of the comment",
             "name": "noteid",
             "in": "path",
@@ -66,6 +59,12 @@
         "responses": {
           "200": {
             "$ref": "#/responses/ActivityPub"
+          },
+          "204": {
+            "$ref": "#/responses/empty"
+          },
+          "404": {
+            "$ref": "#/responses/notFound"
           }
         }
       }
@@ -238,6 +237,9 @@
         "responses": {
           "200": {
             "$ref": "#/responses/ActivityPub"
+          },
+          "404": {
+            "$ref": "#/responses/notFound"
           }
         }
       }

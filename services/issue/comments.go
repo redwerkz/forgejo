@@ -82,7 +82,7 @@ func CreateIssueComment(ctx context.Context, doer *user_model.User, repo *repo_m
 
 	if strings.Contains(repo.OwnerName, "@") {
 		// Federated comment
-		note, err := activitypub.Note(comment)
+		note, err := activitypub.Note(ctx, comment)
 		if err != nil {
 			return nil, err
 		}

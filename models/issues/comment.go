@@ -1347,17 +1347,17 @@ func FixCommentTypeLabelWithOutsideLabels(ctx context.Context) (int64, error) {
 	return res.RowsAffected()
 }
 
-func (c *Comment) GetIRI() string {
-	err := c.LoadIssue(db.DefaultContext)
+func (c *Comment) GetIRI(ctx context.Context) string {
+	err := c.LoadIssue(ctx)
 	if err != nil {
 		return ""
 	}
-	err = c.Issue.LoadRepo(db.DefaultContext)
+	err = c.Issue.LoadRepo(ctx)
 	if err != nil {
 		return ""
 	}
 	if strings.Contains(c.Issue.Repo.OwnerName, "@") {
 		return c.OldTitle
 	}
-	return setting.AppURL + "api/v1/activitypub/note/" + c.Issue.Repo.OwnerName + "/" + c.Issue.Repo.Name + "/" + strconv.FormatInt(c.Issue.Index, 10) + "/" + strconv.FormatInt(c.ID, 10)
+	return setting.AppURL + "api/v1/activitypub/note/" + c.Issue.Repo.OwnerName + "/" + c.Issue.Repo.Name + "/" + strconv.FormatInt(c.ID, 10)
 }

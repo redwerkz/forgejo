@@ -4,9 +4,9 @@
 package activitypub
 
 import (
+	"context"
 	"strconv"
 
-	"code.gitea.io/gitea/models/db"
 	issues_model "code.gitea.io/gitea/models/issues"
 	"code.gitea.io/gitea/modules/forgefed"
 
@@ -14,20 +14,20 @@ import (
 )
 
 // Construct a Note object from a comment
-func Note(comment *issues_model.Comment) (*ap.Note, error) {
-	err := comment.LoadPoster(db.DefaultContext)
+func Note(ctx context.Context, comment *issues_model.Comment) (*ap.Note, error) {
+	err := comment.LoadPoster(ctx)
 	if err != nil {
 		return nil, err
 	}
-	err = comment.LoadIssue(db.DefaultContext)
+	err = comment.LoadIssue(ctx)
 	if err != nil {
 		return nil, err
 	}
 	note := ap.Note{
 		Type:         ap.NoteType,
-		ID:           ap.IRI(comment.GetIRI()),
+		ID:           ap.IRI(comment.GetIRI(ctx)),
 		AttributedTo: ap.IRI(comment.Poster.GetIRI()),
-		Context:      ap.IRI(comment.Issue.GetIRI()),
+		Context:      ap.IRI(comment.Issue.GetIRI(ctx)),
 		To:           ap.ItemCollection{ap.IRI("https://www.w3.org/ns/activitystreams#Public")},
 	}
 	note.Content = ap.NaturalLanguageValuesNew()
@@ -39,8 +39,8 @@ func Note(comment *issues_model.Comment) (*ap.Note, error) {
 }
 
 // Construct a Ticket object from an issue
-func Ticket(issue *issues_model.Issue) (*forgefed.Ticket, error) {
-	iri := issue.GetIRI()
+func Ticket(ctx context.Context, issue *issues_model.Issue) (*forgefed.Ticket, error) {
+	iri := issue.GetIRI(ctx)
 	ticket := forgefed.TicketNew()
 	ticket.Type = forgefed.TicketType
 	ticket.ID = ap.IRI(iri)
@@ -53,13 +53,13 @@ func Ticket(issue *issues_model.Issue) (*forgefed.Ticket, error) {
 		return nil, err
 	}
 
-	err = issue.LoadRepo(db.DefaultContext)
+	err = issue.LoadRepo(ctx)
 	if err != nil {
 		return nil, err
 	}
 	ticket.Context = ap.IRI(issue.Repo.GetIRI())
 
-	err = issue.LoadPoster(db.DefaultContext)
+	err = issue.LoadPoster(ctx)
 	if err != nil {
 		return nil, err
 	}

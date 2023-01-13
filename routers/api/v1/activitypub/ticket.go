@@ -4,8 +4,6 @@
 package activitypub
 
 import (
-	"strconv"
-
 	issues_model "code.gitea.io/gitea/models/issues"
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/services/activitypub"
@@ -37,18 +35,20 @@ func Ticket(ctx *context.APIContext) {
 	// responses:
 	//   "200":
 	//     "$ref": "#/responses/ActivityPub"
+	//   "404":
+	//     "$ref": "#/responses/notFound"
 
-	index, err := strconv.ParseInt(ctx.Params("id"), 10, 64)
+	issue, err := issues_model.GetIssueByIndex(ctx.Repo.Repository.ID, ctx.ParamsInt64("id"))
 	if err != nil {
-		ctx.ServerError("ParseInt", err)
+		if issues_model.IsErrIssueNotExist(err) {
+			ctx.NotFound()
+		} else {
+			ctx.ServerError("GetIssueByIndex", err)
+		}
 		return
 	}
-	issue, err := issues_model.GetIssueByIndex(ctx.Repo.Repository.ID, index)
-	if err != nil {
-		ctx.ServerError("GetIssueByIndex", err)
-		return
-	}
-	ticket, err := activitypub.Ticket(issue)
+
+	ticket, err := activitypub.Ticket(ctx, issue)
 	if err != nil {
 		ctx.ServerError("Ticket", err)
 		return
