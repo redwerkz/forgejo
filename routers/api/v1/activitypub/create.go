@@ -6,7 +6,6 @@ package activitypub
 import (
 	"context"
 	"errors"
-	"net/url"
 	"strconv"
 	"strings"
 
@@ -48,11 +47,7 @@ func createPerson(ctx context.Context, person *ap.Person) error {
 	}
 
 	// Send a WebFinger request to get the username
-	uri, err := url.Parse("https://" + instance + "/.well-known/webfinger?resource=" + person.GetLink().String())
-	if err != nil {
-		return err
-	}
-	resp, err := activitypub.Fetch(uri)
+	resp, err := activitypub.Fetch("https://" + instance + "/.well-known/webfinger?resource=" + person.GetLink().String())
 	if err != nil {
 		return err
 	}
@@ -100,11 +95,7 @@ func createPerson(ctx context.Context, person *ap.Person) error {
 		if err != nil {
 			return err
 		}
-		iconURL, err := icon.URL.GetLink().URL()
-		if err != nil {
-			return err
-		}
-		body, err := activitypub.Fetch(iconURL)
+		body, err := activitypub.Fetch(icon.URL.GetLink().String())
 		if err != nil {
 			return err
 		}
@@ -122,8 +113,23 @@ func createPerson(ctx context.Context, person *ap.Person) error {
 	return user_model.SetUserSetting(user.ID, user_model.UserActivityPubPubPem, person.PublicKey.PublicKeyPem)
 }
 
+// Create a new federated user from a Person IRI
+func createPersonFromIRI(ctx context.Context, personIRI ap.IRI) error {
+	object, err := activitypub.FetchObject(personIRI.String())
+	if err != nil {
+		return err
+	}
+	return ap.On(object, func(p *ap.Person) error {
+		return createPerson(ctx, p)
+	})
+}
+
 // Create a new federated repo from a Repository object
 func createRepository(ctx context.Context, repository *forgefed.Repository) error {
+	err := createPersonFromIRI(ctx, repository.AttributedTo.GetLink())
+	if err != nil {
+		return err
+	}
 	user, err := user_model.GetUserByIRI(ctx, repository.AttributedTo.GetLink().String())
 	if err != nil {
 		return err
@@ -131,8 +137,8 @@ func createRepository(ctx context.Context, repository *forgefed.Repository) erro
 
 	// Check if repo exists
 	_, err = repo_model.GetRepositoryByOwnerAndName(ctx, user.Name, repository.Name.String())
-	if err == nil {
-		return nil
+	if !repo_model.IsErrRepoNotExist(err) {
+		return err
 	}
 
 	repo, err := repo_service.CreateRepository(user, user, repo_module.CreateRepoOptions{
@@ -145,7 +151,7 @@ func createRepository(ctx context.Context, repository *forgefed.Repository) erro
 
 	if repository.ForkedFrom != nil {
 		repo.IsFork = true
-		forkedFrom, err := activitypub.RepositoryIRIToRepository(ctx, repository.ForkedFrom.GetLink())
+		forkedFrom, err := repo_model.GetRepositoryByIRI(ctx, repository.ForkedFrom.GetLink().String())
 		if err != nil {
 			return err
 		}
@@ -154,27 +160,12 @@ func createRepository(ctx context.Context, repository *forgefed.Repository) erro
 	return nil
 }
 
+// Create a new federated repo from a Repository IRI
 func createRepositoryFromIRI(ctx context.Context, repoIRI ap.IRI) error {
-	repoURL, err := url.Parse(repoIRI.String())
+	object, err := activitypub.FetchObject(repoIRI.String())
 	if err != nil {
 		return err
 	}
-	// Fetch repository object
-	resp, err := activitypub.Fetch(repoURL)
-	if err != nil {
-		return err
-	}
-
-	// Parse repository object
-	ap.ItemTyperFunc = forgefed.GetItemByType
-	ap.JSONItemUnmarshal = forgefed.JSONUnmarshalerFn
-	ap.NotEmptyChecker = forgefed.NotEmpty
-	object, err := ap.UnmarshalJSON(resp)
-	if err != nil {
-		return err
-	}
-
-	// Create federated repo
 	return forgefed.OnRepository(object, func(r *forgefed.Repository) error {
 		return createRepository(ctx, r)
 	})
@@ -200,7 +191,7 @@ func createIssue(ctx context.Context, ticket *forgefed.Ticket) error {
 	if err != nil {
 		return err
 	}
-	repo, err := activitypub.RepositoryIRIToRepository(ctx, ap.IRI(ticket.Context.GetLink().String()))
+	repo, err := repo_model.GetRepositoryByIRI(ctx, ticket.Context.GetLink().String())
 	if err != nil {
 		return err
 	}
@@ -228,7 +219,6 @@ func createPullRequest(ctx context.Context, ticket *forgefed.Ticket) error {
 	if err != nil {
 		return err
 	}
-
 	user, err := user_model.GetUserByIRI(ctx, ticket.AttributedTo.GetLink().String())
 	if err != nil {
 		return err

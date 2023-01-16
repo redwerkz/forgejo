@@ -5,6 +5,7 @@ package repo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"html/template"
 	"net"
@@ -669,6 +670,28 @@ func GetRepositoryByID(ctx context.Context, id int64) (*Repository, error) {
 		return nil, ErrRepoNotExist{id, 0, "", ""}
 	}
 	return repo, nil
+}
+
+// GetRepositoryByIRI returns the repository by given IRI if exists.
+func GetRepositoryByIRI(ctx context.Context, iri string) (*Repository, error) {
+	iriSplit := strings.Split(iri, "/")
+	if len(iriSplit) < 5 {
+		return nil, errors.New("not a Repository actor IRI")
+	}
+	if iriSplit[2] == setting.Domain {
+		// Local repository
+		return GetRepositoryByOwnerAndName(ctx, iriSplit[len(iriSplit)-2], iriSplit[len(iriSplit)-1])
+	}
+	repo := &Repository{
+		OriginalURL: iri,
+	}
+	has, err := db.GetEngine(db.DefaultContext).Get(repo)
+	if err != nil {
+		return nil, err
+	} else if !has {
+		return nil, ErrRepoNotExist{0, 0, "", ""}
+	}
+	return repo, err
 }
 
 // GetRepositoriesMapByIDs returns the repositories by given id slice.

@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/forgefed"
@@ -19,9 +18,9 @@ import (
 	"github.com/go-ap/jsonld"
 )
 
-// Fetch a remote ActivityStreams object
-func Fetch(iri *url.URL) (b []byte, err error) {
-	req := httplib.NewRequest(iri.String(), http.MethodGet)
+// Fetch a URL as binary
+func Fetch(iri string) (b []byte, err error) {
+	req := httplib.NewRequest(iri, http.MethodGet)
 	req.Header("Accept", ActivityStreamsContentType)
 	req.Header("User-Agent", "Gitea/"+setting.AppVer)
 	resp, err := req.Response()
@@ -36,6 +35,18 @@ func Fetch(iri *url.URL) (b []byte, err error) {
 	}
 	b, err = io.ReadAll(io.LimitReader(resp.Body, setting.Federation.MaxSize))
 	return b, err
+}
+
+// Fetch a remote ActivityStreams object as an object
+func FetchObject(iri string) (ap.ObjectOrLink, error) {
+	resp, err := Fetch(iri)
+	if err != nil {
+		return nil, err
+	}
+	ap.ItemTyperFunc = forgefed.GetItemByType
+	ap.JSONItemUnmarshal = forgefed.JSONUnmarshalerFn
+	ap.NotEmptyChecker = forgefed.NotEmpty
+	return ap.UnmarshalJSON(resp)
 }
 
 // Send an activity

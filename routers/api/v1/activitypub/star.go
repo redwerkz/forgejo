@@ -10,7 +10,6 @@ import (
 
 	repo_model "code.gitea.io/gitea/models/repo"
 	user_model "code.gitea.io/gitea/models/user"
-	"code.gitea.io/gitea/services/activitypub"
 
 	ap "github.com/go-ap/activitypub"
 )
@@ -21,7 +20,7 @@ func star(ctx context.Context, like ap.Like) (err error) {
 	if err != nil {
 		return
 	}
-	repo, err := activitypub.RepositoryIRIToRepository(ctx, like.Object.GetLink())
+	repo, err := repo_model.GetRepositoryByIRI(ctx, like.Object.GetLink().String())
 	if err != nil || strings.Contains(repo.Name, "@") || repo.IsPrivate {
 		return
 	}
@@ -38,7 +37,7 @@ func unstar(ctx context.Context, unlike ap.Undo) (err error) {
 	if err != nil {
 		return
 	}
-	repo, err := activitypub.RepositoryIRIToRepository(ctx, like.Object.GetLink())
+	repo, err := repo_model.GetRepositoryByIRI(ctx, like.Object.GetLink().String())
 	if err != nil || strings.Contains(repo.Name, "@") || repo.IsPrivate {
 		return
 	}

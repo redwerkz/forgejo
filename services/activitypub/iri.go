@@ -4,44 +4,14 @@
 package activitypub
 
 import (
-	"context"
 	"errors"
 	"strconv"
 	"strings"
 
-	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/modules/setting"
 
 	ap "github.com/go-ap/activitypub"
 )
-
-// Returns the owner and name corresponding to a Repository actor IRI
-func RepositoryIRIToName(repoIRI ap.IRI) (string, string, error) {
-	repoIRISplit := strings.Split(repoIRI.String(), "/")
-	if len(repoIRISplit) < 5 {
-		return "", "", errors.New("not a Repository actor IRI")
-	}
-
-	instance := repoIRISplit[2]
-	username := repoIRISplit[len(repoIRISplit)-2]
-	reponame := repoIRISplit[len(repoIRISplit)-1]
-	if instance == setting.Domain {
-		// Local repo
-		return username, reponame, nil
-	}
-	// Remote repo
-	return username + "@" + instance, reponame, nil
-}
-
-// Returns the repository corresponding to a Repository actor IRI
-func RepositoryIRIToRepository(ctx context.Context, repoIRI ap.IRI) (*repo_model.Repository, error) {
-	username, reponame, err := RepositoryIRIToName(repoIRI)
-	if err != nil {
-		return nil, err
-	}
-
-	return repo_model.GetRepositoryByOwnerAndName(ctx, username, reponame)
-}
 
 // Returns the owner, repo name, and idx of a Ticket object IRI
 func TicketIRIToName(ticketIRI ap.IRI) (string, string, int64, error) {

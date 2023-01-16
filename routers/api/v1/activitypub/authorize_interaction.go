@@ -5,10 +5,10 @@ package activitypub
 
 import (
 	"net/http"
-	"net/url"
 	"strconv"
 
 	user_model "code.gitea.io/gitea/models/user"
+	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/forgefed"
 	"code.gitea.io/gitea/modules/setting"
@@ -19,12 +19,7 @@ import (
 
 // Fetch and load a remote object
 func AuthorizeInteraction(ctx *context.Context) {
-	uri, err := url.Parse(ctx.Req.URL.Query().Get("uri"))
-	if err != nil {
-		ctx.ServerError("Parse URI", err)
-		return
-	}
-	resp, err := activitypub.Fetch(uri)
+	resp, err := activitypub.Fetch(ctx.Req.URL.Query().Get("uri"))
 	if err != nil {
 		ctx.ServerError("Fetch", err)
 		return
@@ -67,12 +62,12 @@ func AuthorizeInteraction(ctx *context.Context) {
 			ctx.ServerError("FederatedRepoNew", err)
 			return
 		}
-		username, reponame, err := activitypub.RepositoryIRIToName(object.GetLink())
+		repo, err := repo_model.GetRepositoryByIRI(ctx, object.GetLink().String())
 		if err != nil {
 			ctx.ServerError("RepositoryIRIToName", err)
 			return
 		}
-		ctx.Redirect(setting.AppURL + username + "/" + reponame)
+		ctx.Redirect(setting.AppURL + repo.OwnerName + "/" + repo.Name)
 	case forgefed.TicketType:
 		// Federated issue or pull request
 		err = forgefed.OnTicket(object, func(t *forgefed.Ticket) error {

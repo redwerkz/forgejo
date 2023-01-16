@@ -10,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"net/url"
 
 	gitea_context "code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/setting"
@@ -20,15 +19,15 @@ import (
 	"github.com/go-fed/httpsig"
 )
 
-func getPublicKeyFromResponse(b []byte, keyID *url.URL) (p crypto.PublicKey, err error) {
-	person := ap.PersonNew(ap.IRI(keyID.String()))
+func getPublicKeyFromResponse(b []byte, keyID string) (p crypto.PublicKey, err error) {
+	person := ap.PersonNew(ap.IRI(keyID))
 	err = person.UnmarshalJSON(b)
 	if err != nil {
 		err = fmt.Errorf("ActivityStreams type cannot be converted to one known to have publicKey property: %w", err)
 		return
 	}
 	pubKey := person.PublicKey
-	if pubKey.ID.String() != keyID.String() {
+	if pubKey.ID.String() != keyID {
 		err = fmt.Errorf("cannot find publicKey with id: %s in %s", keyID, string(b))
 		return
 	}
@@ -58,16 +57,12 @@ func verifyHTTPSignatures(ctx *gitea_context.APIContext) (authenticated bool, er
 	if err != nil {
 		return
 	}
-	idIRI, err := url.Parse(ID)
-	if err != nil {
-		return
-	}
 	// 2. Fetch the public key of the other actor
-	b, err := activitypub.Fetch(idIRI)
+	b, err := activitypub.Fetch(ID)
 	if err != nil {
 		return
 	}
-	pubKey, err := getPublicKeyFromResponse(b, idIRI)
+	pubKey, err := getPublicKeyFromResponse(b, ID)
 	if err != nil {
 		return
 	}
