@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"strconv"
 
-	user_model "code.gitea.io/gitea/models/user"
 	repo_model "code.gitea.io/gitea/models/repo"
+	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/forgefed"
 	"code.gitea.io/gitea/modules/setting"
@@ -44,7 +44,7 @@ func AuthorizeInteraction(ctx *context.Context) {
 		}
 		err = createPerson(ctx, person)
 		if err != nil {
-			ctx.ServerError("FederatedUserNew", err)
+			ctx.ServerError("CreatePerson", err)
 			return
 		}
 		user, err := user_model.GetUserByIRI(ctx, object.GetLink().String())
@@ -59,7 +59,7 @@ func AuthorizeInteraction(ctx *context.Context) {
 			return createRepository(ctx, r)
 		})
 		if err != nil {
-			ctx.ServerError("FederatedRepoNew", err)
+			ctx.ServerError("CreateRepository", err)
 			return
 		}
 		repo, err := repo_model.GetRepositoryByIRI(ctx, object.GetLink().String())

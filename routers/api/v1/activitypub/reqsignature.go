@@ -108,6 +108,7 @@ func checkActivityAndKeyID(activity ap.Activity, keyID string) error {
 	if activity.Type == ap.UndoType {
 		return ap.OnActivity(activity.Object, func(a *ap.Activity) error {
 			if a.Actor != nil && keyID != a.Actor.GetLink().String()+"#main-key" {
+				// TODO: This doesn't necessarily mean impersonation since the object might be created by someone else
 				return errors.New("actor does not match HTTP signature keyID")
 			}
 			if a.AttributedTo != nil && keyID != a.AttributedTo.GetLink().String()+"#main-key" {

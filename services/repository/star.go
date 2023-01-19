@@ -7,6 +7,7 @@ import (
 	"context"
 
 	"code.gitea.io/gitea/models/auth"
+	"code.gitea.io/gitea/models/db"
 	repo_model "code.gitea.io/gitea/models/repo"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/services/activitypub"
@@ -41,5 +42,39 @@ func StarRepo(ctx context.Context, userID, repoID int64, star bool) error {
 			return err
 		}
 	}
-	return repo_model.StarRepo(userID, repoID, star)
+	err = repo_model.StarRepo(userID, repoID, star)
+	if err != nil {
+		return err
+	}
+	user, err := user_model.GetUserByID(ctx, userID)
+	if err != nil {
+		return err
+	}
+	followers, count, err := user_model.GetUserFollowers(ctx, user, user, db.ListOptions{})
+	if err != nil {
+		return err
+	}
+	note := ap.Note{
+		Type:         ap.NoteType,
+		ID:           ap.IRI(repo.GetIRI()), // TODO: serve the note at an API endpoint
+		AttributedTo: ap.IRI(user.GetIRI()),
+		To:           ap.ItemCollection{ap.IRI("https://www.w3.org/ns/activitystreams#Public")},
+	}
+	note.Content = ap.NaturalLanguageValuesNew()
+	err = note.Content.Set("en", ap.Content(user.Name+" starred <a href=\""+repo.HTMLURL()+"\">"+repo.FullName()+"</a>"))
+	if err != nil {
+		return err
+	}
+	create := ap.Create{
+		Type:   ap.CreateType,
+		Actor:  ap.PersonNew(ap.IRI(user.GetIRI())),
+		Object: note,
+		To:     ap.ItemCollection{},
+	}
+	for i := int64(0); i < count; i++ {
+		if followers[i].LoginType == auth.Federated {
+			create.To.Append(ap.IRI(followers[i].GetIRI()+"/inbox"))
+		}
+	}
+	return activitypub.Send(user, &create)
 }

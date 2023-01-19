@@ -126,12 +126,13 @@ func createPersonFromIRI(ctx context.Context, personIRI ap.IRI) error {
 
 // Create a new federated repo from a Repository object
 func createRepository(ctx context.Context, repository *forgefed.Repository) error {
-	err := createPersonFromIRI(ctx, repository.AttributedTo.GetLink())
-	if err != nil {
-		return err
-	}
 	user, err := user_model.GetUserByIRI(ctx, repository.AttributedTo.GetLink().String())
-	if err != nil {
+	if user_model.IsErrUserNotExist(err) {
+		err := createPersonFromIRI(ctx, repository.AttributedTo.GetLink())
+		if err != nil {
+			return err
+		}
+	} else if err != nil {
 		return err
 	}
 
@@ -181,6 +182,7 @@ func createTicket(ctx context.Context, ticket *forgefed.Ticket) error {
 
 // Create an issue
 func createIssue(ctx context.Context, ticket *forgefed.Ticket) error {
+	// TODO: don't call this function here
 	err := createRepositoryFromIRI(ctx, ticket.Context.GetLink())
 	if err != nil {
 		return err
@@ -215,6 +217,7 @@ func createIssue(ctx context.Context, ticket *forgefed.Ticket) error {
 
 // Create a pull request
 func createPullRequest(ctx context.Context, ticket *forgefed.Ticket) error {
+	// TODO: don't call this function here
 	err := createRepositoryFromIRI(ctx, ticket.Context.GetLink())
 	if err != nil {
 		return err
@@ -271,6 +274,7 @@ func createPullRequest(ctx context.Context, ticket *forgefed.Ticket) error {
 
 // Create a comment
 func createComment(ctx context.Context, note *ap.Note) error {
+	// Make sure repo exists
 	user, err := user_model.GetUserByIRI(ctx, note.AttributedTo.GetLink().String())
 	if err != nil {
 		return err
