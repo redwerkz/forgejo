@@ -131,13 +131,15 @@ func PersonInbox(ctx *context.APIContext) {
 		// Unfollowing a user
 		err = unfollow(ctx, activity)
 	case ap.CreateType:
-		// TODO: this is kinda a hack
-		err = ap.OnObject(activity.Object, func(n *ap.Note) error {
-			noteIRI := n.InReplyTo.GetLink().String()
-			noteIRISplit := strings.Split(noteIRI, "/")
-			n.Context = ap.IRI(strings.TrimSuffix(noteIRI, "/"+noteIRISplit[len(noteIRISplit)-1]))
-			return createComment(ctx, n)
-		})
+		if activity.Object.GetType() == ap.NoteType {
+			// TODO: this is kinda a hack
+			err = ap.OnObject(activity.Object, func(n *ap.Note) error {
+				noteIRI := n.InReplyTo.GetLink().String()
+				noteIRISplit := strings.Split(noteIRI, "/")
+				n.Context = ap.IRI(strings.TrimSuffix(noteIRI, "/"+noteIRISplit[len(noteIRISplit)-1]))
+				return createComment(ctx, n)
+			})
+		}
 	case ap.DeleteType:
 		// Deleting a user
 		err = delete(ctx, activity)

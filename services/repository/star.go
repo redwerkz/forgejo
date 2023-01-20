@@ -73,7 +73,7 @@ func StarRepo(ctx context.Context, userID, repoID int64, star bool) error {
 	}
 	for i := int64(0); i < count; i++ {
 		if followers[i].LoginType == auth.Federated {
-			create.To.Append(ap.IRI(followers[i].GetIRI()+"/inbox"))
+			create.To.Append(ap.IRI(followers[i].GetIRI() + "/inbox"))
 		}
 	}
 	return activitypub.Send(user, &create)
