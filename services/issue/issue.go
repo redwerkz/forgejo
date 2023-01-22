@@ -4,6 +4,7 @@
 package issue
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -22,7 +23,7 @@ import (
 )
 
 // NewIssue creates new issue with labels for repository.
-func NewIssue(repo *repo_model.Repository, issue *issues_model.Issue, labelIDs []int64, uuids []string, assigneeIDs []int64) error {
+func NewIssue(ctx context.Context, repo *repo_model.Repository, issue *issues_model.Issue, labelIDs []int64, uuids []string, assigneeIDs []int64) error {
 	if err := issues_model.NewIssue(repo, issue, labelIDs, uuids); err != nil {
 		return err
 	}
@@ -38,7 +39,7 @@ func NewIssue(repo *repo_model.Repository, issue *issues_model.Issue, labelIDs [
 			return err
 		}
 		create := activitypub.Create(issue.Poster, ticket, repo.GetIRI())
-		err = activitypub.Send(issue.Poster, create)
+		err = activitypub.Send(ctx, issue.Poster, create)
 		if err != nil {
 			return err
 		}

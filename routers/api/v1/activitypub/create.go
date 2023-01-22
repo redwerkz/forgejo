@@ -212,7 +212,7 @@ func createIssue(ctx context.Context, ticket *forgefed.Ticket) error {
 		OriginalAuthor: ticket.GetLink().String(), // Create new database field to store IRI?
 		IsClosed:       ticket.IsResolved,
 	}
-	return issue_service.NewIssue(repo, issue, nil, nil, nil)
+	return issue_service.NewIssue(ctx, repo, issue, nil, nil, nil)
 }
 
 // Create a pull request

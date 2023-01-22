@@ -35,11 +35,11 @@ func CreateFork(ctx context.Context, instance, username, reponame, destUsername 
 
 	// Send a Create activity to the instance we are forking from
 	create := ap.Create{Type: ap.CreateType}
-	create.To = ap.ItemCollection{ap.IRI("https://" + instance + "/api/v1/activitypub/repo/" + username + "/" + reponame + "/inbox")}
+	create.To = ap.ItemCollection{ap.IRI("https://" + instance + "/api/v1/activitypub/repo/" + username + "/" + reponame)}
 	repo := ap.IRI(setting.AppURL + "api/v1/activitypub/repo/" + destUsername + "/" + reponame)
 	// repo := forgefed.RepositoryNew(ap.IRI(setting.AppURL + "api/v1/activitypub/repo/" + destUsername + "/" + reponame))
 	// repo.ForkedFrom = forgefed.RepositoryNew(ap.IRI())
 	create.Object = repo
 
-	return activitypub.Send(user, &create)
+	return activitypub.Send(ctx, user, &create)
 }

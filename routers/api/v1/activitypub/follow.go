@@ -39,9 +39,9 @@ func follow(ctx context.Context, follow ap.Follow) error {
 	// Send back an Accept activity
 	accept := ap.AcceptNew(objectIRI, follow)
 	accept.Actor = ap.Person{ID: objectIRI}
-	accept.To = ap.ItemCollection{ap.IRI(actorIRI.String() + "/inbox")}
+	accept.To = ap.ItemCollection{ap.IRI(actorIRI.String())}
 	accept.Object = follow
-	return activitypub.Send(objectUser, accept)
+	return activitypub.Send(ctx, objectUser, accept)
 }
 
 // Process an incoming Undo follow activity

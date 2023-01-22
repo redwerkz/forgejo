@@ -293,7 +293,7 @@ func FollowUser(ctx context.Context, userID, followID int64) (err error) {
 		if err != nil {
 			return err
 		}
-		err = activitypub.Send(actorUser, activitypub.Follow(actorUser, followUser))
+		err = activitypub.Send(ctx, actorUser, activitypub.Follow(actorUser, followUser))
 		if err != nil {
 			return err
 		}
@@ -318,7 +318,7 @@ func UnfollowUser(ctx context.Context, userID, followID int64) (err error) {
 		if err != nil {
 			return err
 		}
-		err = activitypub.Send(actorUser, activitypub.Unfollow(actorUser, followUser))
+		err = activitypub.Send(ctx, actorUser, activitypub.Unfollow(actorUser, followUser))
 		if err != nil {
 			return err
 		}

@@ -4,10 +4,13 @@
 package activitypub
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
 
+	"code.gitea.io/gitea/models/auth"
+	"code.gitea.io/gitea/models/db"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/forgefed"
 	"code.gitea.io/gitea/modules/httplib"
@@ -50,7 +53,7 @@ func FetchObject(iri string) (ap.ObjectOrLink, error) {
 }
 
 // Send an activity
-func Send(user *user_model.User, activity *ap.Activity) error {
+func Send(ctx context.Context, user *user_model.User, activity *ap.Activity) error {
 	binary, err := jsonld.WithContext(
 		jsonld.IRI(ap.ActivityBaseURI),
 		jsonld.IRI(ap.SecurityContextURI),
@@ -60,11 +63,39 @@ func Send(user *user_model.User, activity *ap.Activity) error {
 		return err
 	}
 
+	// Construt list of recipients
+	recipients := []string{}
 	for _, to := range activity.To {
-		client, _ := NewClient(user, user.GetIRI()+"#main-key")
-		resp, _ := client.Post(binary, to.GetLink().String())
-		respBody, _ := io.ReadAll(io.LimitReader(resp.Body, setting.Federation.MaxSize))
+		if to.GetLink().String() == user.GetIRI()+"/followers" {
+			followers, count, err := user_model.GetUserFollowers(ctx, user, user, db.ListOptions{})
+			if err != nil {
+				return err
+			}
+			for i := int64(0); i < count; i++ {
+				if followers[i].LoginType == auth.Federated {
+					recipients = append(recipients, followers[i].GetIRI())
+				}
+			}
+		} else {
+			recipients = append(recipients, to.GetLink().String())
+		}
+	}
+
+	// Send out activity to recipients
+	for _, recipient := range recipients {
+		client, err := NewClient(user, user.GetIRI()+"#main-key")
+		if err != nil {
+			return err
+		}
+		resp, err := client.Post(binary, recipient)
+		if err != nil {
+			return err
+		}
+		respBody, err := io.ReadAll(io.LimitReader(resp.Body, setting.Federation.MaxSize))
+		if err != nil {
+			return err
+		}
 		log.Trace("Response from sending activity", string(respBody))
 	}
-	return err
+	return nil
 }

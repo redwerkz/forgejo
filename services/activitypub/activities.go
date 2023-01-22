@@ -17,7 +17,7 @@ func Follow(actorUser, followUser *user_model.User) *ap.Follow {
 		Type:   ap.FollowType,
 		Actor:  ap.PersonNew(ap.IRI(actorUser.GetIRI())),
 		Object: ap.PersonNew(ap.IRI(followUser.GetIRI())),
-		To:     ap.ItemCollection{ap.IRI(followUser.GetIRI() + "/inbox")},
+		To:     ap.ItemCollection{ap.IRI(followUser.GetIRI())},
 	}
 }
 
@@ -27,7 +27,7 @@ func Unfollow(actorUser, followUser *user_model.User) *ap.Undo {
 		Type:   ap.UndoType,
 		Actor:  ap.PersonNew(ap.IRI(actorUser.GetIRI())),
 		Object: Follow(actorUser, followUser),
-		To:     ap.ItemCollection{ap.IRI(followUser.GetIRI() + "/inbox")},
+		To:     ap.ItemCollection{ap.IRI(followUser.GetIRI())},
 	}
 }
 
@@ -37,7 +37,7 @@ func Star(user *user_model.User, repo *repo_model.Repository) *ap.Like {
 		Type:   ap.LikeType,
 		Actor:  ap.PersonNew(ap.IRI(user.GetIRI())),
 		Object: forgefed.RepositoryNew(ap.IRI(repo.GetIRI())),
-		To:     ap.ItemCollection{ap.IRI(repo.GetIRI() + "/inbox")},
+		To:     ap.ItemCollection{ap.IRI(repo.GetIRI())},
 	}
 }
 
@@ -47,7 +47,7 @@ func Unstar(user *user_model.User, repo *repo_model.Repository) *ap.Undo {
 		Type:   ap.UndoType,
 		Actor:  ap.PersonNew(ap.IRI(user.GetIRI())),
 		Object: Star(user, repo),
-		To:     ap.ItemCollection{ap.IRI(repo.GetIRI() + "/inbox")},
+		To:     ap.ItemCollection{ap.IRI(repo.GetIRI())},
 	}
 }
 
@@ -57,6 +57,6 @@ func Create(user *user_model.User, object ap.ObjectOrLink, to string) *ap.Create
 		Type:   ap.CreateType,
 		Actor:  ap.PersonNew(ap.IRI(user.GetIRI())),
 		Object: object,
-		To:     ap.ItemCollection{ap.IRI(to + "/inbox")},
+		To:     ap.ItemCollection{ap.IRI(to)},
 	}
 }

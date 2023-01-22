@@ -87,7 +87,7 @@ func CreateIssueComment(ctx context.Context, doer *user_model.User, repo *repo_m
 			return nil, err
 		}
 		create := activitypub.Create(doer, note, repo.GetIRI())
-		err = activitypub.Send(doer, create)
+		err = activitypub.Send(ctx, doer, create)
 		if err != nil {
 			return nil, err
 		}

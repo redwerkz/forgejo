@@ -7,7 +7,6 @@ import (
 	"context"
 
 	"code.gitea.io/gitea/models/auth"
-	"code.gitea.io/gitea/models/db"
 	repo_model "code.gitea.io/gitea/models/repo"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/services/activitypub"
@@ -37,7 +36,7 @@ func StarRepo(ctx context.Context, userID, repoID int64, star bool) error {
 		} else {
 			activity = activitypub.Unstar(user, repo)
 		}
-		err = activitypub.Send(user, activity)
+		err = activitypub.Send(ctx, user, activity)
 		if err != nil {
 			return err
 		}
@@ -50,10 +49,7 @@ func StarRepo(ctx context.Context, userID, repoID int64, star bool) error {
 	if err != nil {
 		return err
 	}
-	followers, count, err := user_model.GetUserFollowers(ctx, user, user, db.ListOptions{})
-	if err != nil {
-		return err
-	}
+
 	note := ap.Note{
 		Type:         ap.NoteType,
 		ID:           ap.IRI(repo.GetIRI()), // TODO: serve the note at an API endpoint
@@ -69,12 +65,7 @@ func StarRepo(ctx context.Context, userID, repoID int64, star bool) error {
 		Type:   ap.CreateType,
 		Actor:  ap.PersonNew(ap.IRI(user.GetIRI())),
 		Object: note,
-		To:     ap.ItemCollection{},
+		To:     ap.ItemCollection{ap.IRI(user.GetIRI() + "/followers")},
 	}
-	for i := int64(0); i < count; i++ {
-		if followers[i].LoginType == auth.Federated {
-			create.To.Append(ap.IRI(followers[i].GetIRI() + "/inbox"))
-		}
-	}
-	return activitypub.Send(user, &create)
+	return activitypub.Send(ctx, user, &create)
 }
