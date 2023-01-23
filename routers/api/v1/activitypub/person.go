@@ -9,8 +9,6 @@ import (
 	"net/http"
 	"strings"
 
-	"code.gitea.io/gitea/models/activities"
-	"code.gitea.io/gitea/models/db"
 	repo_model "code.gitea.io/gitea/models/repo"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/context"
@@ -18,7 +16,6 @@ import (
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/routers/api/v1/utils"
 	"code.gitea.io/gitea/services/activitypub"
-	"code.gitea.io/gitea/services/convert"
 
 	ap "github.com/go-ap/activitypub"
 )
@@ -168,75 +165,10 @@ func PersonOutbox(ctx *context.APIContext) {
 	//   type: string
 	//   required: true
 	// responses:
-	//   "200":
+	//   "501":
 	//     "$ref": "#/responses/ActivityPub"
 
-	iri := ctx.ContextUser.GetIRI()
-
-	orderedCollection := ap.OrderedCollectionNew(ap.IRI(iri + "/outbox"))
-	orderedCollection.First = ap.IRI(iri + "/outbox?page=1")
-
-	outbox := ap.OrderedCollectionPageNew(orderedCollection)
-	outbox.First = ap.IRI(iri + "/outbox?page=1")
-
-	feed, err := activities.GetFeeds(ctx, activities.GetFeedsOptions{
-		RequestedUser:       ctx.ContextUser,
-		RequestedActionType: activities.ActionCreateRepo,
-		Actor:               ctx.Doer,
-		IncludePrivate:      false,
-		IncludeDeleted:      false,
-		ListOptions:         utils.GetListOptions(ctx),
-	})
-
-	// Only specify next if this amount of feed corresponds to the calculated limit.
-	if len(feed) == convert.ToCorrectPageSize(ctx.FormInt("limit")) {
-		outbox.Next = ap.IRI(fmt.Sprintf("%s/outbox?page=%d", iri, ctx.FormInt("page")+1))
-	}
-
-	// Only specify previous page when there is one.
-	if ctx.FormInt("page") > 1 {
-		outbox.Prev = ap.IRI(fmt.Sprintf("%s/outbox?page=%d", iri, ctx.FormInt("page")-1))
-	}
-
-	if err != nil {
-		ctx.ServerError("Couldn't fetch feed", err)
-		return
-	}
-
-	for _, action := range feed {
-		// Created a repo
-		object := ap.Note{Type: ap.NoteType, Content: ap.NaturalLanguageValuesNew()}
-		_ = object.Content.Set("en", ap.Content(action.GetRepoName()))
-		create := ap.Create{Type: ap.CreateType, Object: object}
-		err := outbox.OrderedItems.Append(create)
-		if err != nil {
-			ctx.ServerError("OrderedItems.Append", err)
-			return
-		}
-	}
-
-	// TODO: Remove this code and implement an ActionStarRepo type, so `GetFeeds`
-	// can handle this with correct pagination and ordering.
-	stars, err := repo_model.GetStarredRepos(ctx, ctx.ContextUser.ID, false, db.ListOptions{Page: 1, PageSize: 1000000})
-	if err != nil {
-		ctx.ServerError("Couldn't fetch stars", err)
-		return
-	}
-
-	for _, star := range stars {
-		object := ap.Note{Type: ap.NoteType, Content: ap.NaturalLanguageValuesNew()}
-		_ = object.Content.Set("en", ap.Content("Starred "+star.Name))
-		create := ap.Create{Type: ap.CreateType, Object: object}
-		err := outbox.OrderedItems.Append(create)
-		if err != nil {
-			ctx.ServerError("OrderedItems.Append", err)
-			return
-		}
-	}
-
-	outbox.TotalItems = uint(len(outbox.OrderedItems))
-
-	response(ctx, outbox)
+	ctx.Status(http.StatusNotImplemented)
 }
 
 // PersonFollowing function returns the user's Following Collection

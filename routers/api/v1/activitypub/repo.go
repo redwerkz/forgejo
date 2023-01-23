@@ -168,10 +168,9 @@ func RepoOutbox(ctx *context.APIContext) {
 	//   type: string
 	//   required: true
 	// responses:
-	//   "200":
+	//   "501":
 	//     "$ref": "#/responses/ActivityPub"
 
-	// TODO
 	ctx.Status(http.StatusNotImplemented)
 }
 
