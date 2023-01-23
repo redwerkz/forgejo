@@ -83,7 +83,7 @@ func RepoInbox(ctx *context.APIContext) {
 	//   type: string
 	//   required: true
 	// responses:
-	//   "204":
+	//   "202":
 	//     "$ref": "#/responses/empty"
 
 	body, err := io.ReadAll(io.LimitReader(ctx.Req.Body, setting.Federation.MaxSize))
@@ -169,7 +169,7 @@ func RepoOutbox(ctx *context.APIContext) {
 	//   required: true
 	// responses:
 	//   "501":
-	//     "$ref": "#/responses/ActivityPub"
+	//     "$ref": "#/responses/empty"
 
 	ctx.Status(http.StatusNotImplemented)
 }
