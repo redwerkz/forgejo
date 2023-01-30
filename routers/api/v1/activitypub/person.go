@@ -190,25 +190,43 @@ func PersonFollowing(ctx *context.APIContext) {
 
 	iri := ctx.ContextUser.GetIRI()
 
-	users, _, err := user_model.GetUserFollowing(ctx, ctx.ContextUser, ctx.Doer, utils.GetListOptions(ctx))
+	// TODO: pagination is really broken
+	// https://codeberg.org/forgejo/forgejo/commit/90afd4f3294c1f33d9b5afe5c6f082e2831026cb
+	users, count, err := user_model.GetUserFollowing(ctx, ctx.ContextUser, ctx.Doer, utils.GetListOptions(ctx))
 	if err != nil {
 		ctx.ServerError("GetUserFollowing", err)
 		return
 	}
 
-	following := ap.OrderedCollectionNew(ap.IRI(iri + "/following"))
-	following.TotalItems = uint(len(users))
+	page := ctx.FormInt("page")
+
+	followingCollection := ap.OrderedCollectionNew(ap.IRI(iri + "/following"))
+	followingCollection.First = ap.IRI(iri + "/following?page=1")
+	followingCollection.TotalItems = uint(count)
+	if page == 0 {
+		response(ctx, followingCollection)
+		return
+	}
+
+	followingPage := ap.OrderedCollectionPageNew(followingCollection)
+	followingPage.ID = ap.IRI(fmt.Sprintf("%s/following?page=%d", iri, page))
+
+	if page > 1 {
+		followingPage.Prev = ap.IRI(fmt.Sprintf("%s/following?page=%d", iri, page-1))
+	}
+	if len(users)*page < int(count) {
+		followingPage.Next = ap.IRI(fmt.Sprintf("%s/following?page=%d", iri, page+1))
+	}
 
 	for _, user := range users {
-		person := ap.PersonNew(ap.IRI(user.GetIRI()))
-		err := following.OrderedItems.Append(person)
+		err := followingPage.OrderedItems.Append(ap.IRI(user.GetIRI()))
 		if err != nil {
 			ctx.ServerError("OrderedItems.Append", err)
 			return
 		}
 	}
 
-	response(ctx, following)
+	response(ctx, followingPage)
 }
 
 // PersonFollowers function returns the user's Followers Collection
